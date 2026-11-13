@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import Logo from '../Logo/Logo';
 import Icone from '../Icone/Icone';
-// import { contato } from '../../data/contato';
+import { contato } from '../../data/contato';
 
 export default function Footer() {
     return (
@@ -68,13 +68,13 @@ export default function Footer() {
                         </li>
                     </ul>
                 </div>
-                <div className="min-w-0">
+                                <div className="min-w-0">
                     <h2 className="mb-4 text-sm font-semibold text-amarelo">Fale com a gente</h2>
                     <Link className="footer-link" to="/contato">
                         <Icone nome="email" className="h-4 w-4" />
                         Entre em contato
                     </Link>
-                    {/* <div className="mt-3 grid gap-2">
+                    <div className="mt-3 grid gap-2">
                         <a
                             className="footer-link"
                             href={contato.instagram.url}
@@ -84,7 +84,10 @@ export default function Footer() {
                             <Icone nome="instagram" className="h-4 w-4" />
                             {contato.instagram.nome}
                         </a>
-                    </div> */}
+                    </div>
+                    <p className="mt-3 text-xs leading-5 text-creme/50">
+                        Contatos fictícios, usados apenas para fins acadêmicos.
+                    </p>
                 </div>
             </div>
             <div className="container-page flex flex-col justify-between gap-3 border-t border-creme/15 py-6 text-xs text-creme/65 sm:flex-row">
