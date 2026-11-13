@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
-import PageIntro from '../components/PageIntro/PageIntro';
-import TeamCard from '../components/TeamCard/TeamCard';
-import Icone from '../components/Icone/Icone';
-import { integrantes } from '../data/integrantes';
+import PageIntro from '../../components/PageIntro/PageIntro';
+import TeamCard from '../../components/TeamCard/TeamCard';
+import Icone from '../../components/Icone/Icone';
+import { integrantes } from '../../data/integrantes';
 
 export default function Integrantes() {
     return (
