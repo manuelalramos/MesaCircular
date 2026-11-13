@@ -4,14 +4,14 @@ import { formatarData, formatarNumero, statusDoLote } from '../../services/regra
 import TagStatus from '../TagStatus/TagStatus';
 import Icone from '../Icone/Icone';
 import Imagem from '../Imagem/Imagem';
-// import { imagemDoLote } from '../../data/imagens';
+import { imagemDoLote } from '../../data/imagem';
 
 export default function CardLote({ lote }: { lote: Lote }) {
     return (
         <article className="card-lote group flex min-w-0 flex-col overflow-hidden rounded-[24px] border border-linha bg-[#FFFDF8]">
             <div className="relative h-36 overflow-hidden sm:h-40">
                 <Imagem
-                    // src={imagemDoLote(lote)}
+                    src={imagemDoLote(lote)}
                     alt={lote.descricao}
                     className="h-full w-full object-cover transition duration-500 group-hover:scale-105 motion-reduce:transform-none"
                     loading="lazy"
