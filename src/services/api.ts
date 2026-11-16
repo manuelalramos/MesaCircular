@@ -16,7 +16,7 @@ import type {
 
 import { ErroApi } from './erro.ts';
 
-export const API_BASE = import.meta.env?.VITE_API_BASE || 'https://api-mesa-circular.onrender.com'; // TROCAR API
+export const API_BASE = import.meta.env?.VITE_API_BASE || 'https://mesacircular-api.onrender.com'; // api atualizada
 let sessaoAtual: Sessao | null = null;
 export function definirSessaoApi(sessao: Sessao | null) {
     sessaoAtual = sessao;
