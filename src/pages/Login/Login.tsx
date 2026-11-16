@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react
 import AcessoLayout from '../../layouts/AcessoLayout/AcessoLayout';
 import CampoFormulario from '../../components/CampoFormulario/CampoFormulario';
 import Feedback from '../../components/Feedback/Feedback';
+import AvisoEstado from '../../components/AvisoEstado/AvisoEstado';
 import Icone from '../../components/Icone/Icone';
 import useSessao from '../../hooks/useSessao';
 import useAcao from '../../hooks/useAcao';
@@ -123,7 +124,11 @@ export default function Login() {
                         required
                         erro={erros.senha}
                     />
-                    <Feedback erro={acao.erro} />
+                    {acao.enviando ? (
+                        <AvisoEstado tipo="carregando" mensagem="Entrando na sua conta…" compacto />
+                    ) : (
+                        <Feedback erro={acao.erro} />
+                    )}
                     <button type="submit" className="botao botao-entrar w-full">
                         {acao.enviando ? 'Entrando…' : 'Entrar'}
                         <Icone

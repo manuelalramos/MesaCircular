@@ -15,6 +15,9 @@ export default function Footer() {
                     <p className="mt-2 max-w-64 text-xs leading-6 text-creme/65">
                         Conectando alimentos e pessoas no mesmo bairro.
                     </p>
+                    <p className="mt-4 max-w-64 text-xs leading-6 text-creme/75">
+                        No momento, o Mesa Circular atende apenas a Região Metropolitana de São Paulo.
+                    </p>
                 </div>
                 <div>
                     <h2 className="mb-4 text-sm font-semibold text-amarelo">Pelo site</h2>
@@ -93,7 +96,7 @@ export default function Footer() {
             <div className="container-page flex flex-col justify-between gap-3 border-t border-creme/15 py-6 text-xs text-creme/65 sm:flex-row">
                 <p>© 2026 Mesa Circular · Global Solution FIAP</p>
                 <Link to="/integrantes" className="footer-link !text-xs">
-                    ADS · Conheça a equipe <Icone nome="seta" className="h-4 w-4" />
+                    Conheça a equipe <Icone nome="seta" className="h-4 w-4" />
                 </Link>
             </div>
         </footer>

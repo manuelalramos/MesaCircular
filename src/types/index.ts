@@ -1,5 +1,6 @@
 export type Perfil = 'ofertante' | 'organizacao' | 'administrador';
-export type StatusLote = 'DISPONIVEL' | 'RESERVADO' | 'RETIRADO' | 'VENCIDO';
+export type TipoOfertante = 'feirante' | 'mercado' | 'produtor';
+export type StatusLote = 'DISPONIVEL' | 'RESERVADO' | 'RETIRADO' | 'VENCIDO' | 'INATIVO';
 export type StatusReserva = 'ATIVA' | 'RETIRADA' | 'CANCELADA';
 
 export interface Ofertante {
@@ -8,6 +9,7 @@ export interface Ofertante {
     email: string;
     contato: string;
     bairro: string;
+    idBairro: number;
 }
 
 export interface Organizacao {
@@ -17,6 +19,7 @@ export interface Organizacao {
     contato: string;
     bairro: string;
     responsavel: string;
+    idBairro: number;
 }
 
 export interface Administrador {
@@ -33,6 +36,7 @@ export type Sessao =
 export interface Categoria {
     id: number;
     nome: string;
+    descricao?: string;
 }
 
 export interface Lote {
@@ -49,6 +53,8 @@ export interface Lote {
     ofertante: Ofertante;
     imagem?: string;
     criadoEm: string;
+    idBairro: number;
+    ativo: boolean;
 }
 
 export interface Reserva {
@@ -56,6 +62,7 @@ export interface Reserva {
     lote: Lote;
     organizacao: Organizacao;
     quantidade: number;
+    quantidadeRetirada: number;
     status: StatusReserva;
     criadaEm: string;
 }
@@ -68,8 +75,16 @@ export interface Credenciais {
 export interface DadosCadastro extends Credenciais {
     nome: string;
     contato: string;
-    bairro: string;
+    idBairro: number;
+    tipoOfertante?: TipoOfertante;
     responsavel?: string;
+}
+
+export interface Bairro {
+    id: number;
+    nome: string;
+    cidade: string;
+    uf: string;
 }
 
 export interface DadosLote {
@@ -78,9 +93,11 @@ export interface DadosLote {
     unidade: string;
     categoriaId: number;
     prazoRetirada: string;
-    bairro: string;
+    idBairro: number;
     local: string;
     ofertanteId: number;
+    imagem?: string;
+    ativo?: boolean;
 }
 
 export interface DadosReserva {

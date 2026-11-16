@@ -3,9 +3,11 @@ import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import AcessoLayout from '../../layouts/AcessoLayout/AcessoLayout';
 import CampoFormulario from '../../components/CampoFormulario/CampoFormulario';
 import Feedback from '../../components/Feedback/Feedback';
+import AvisoEstado from '../../components/AvisoEstado/AvisoEstado';
 import useSessao from '../../hooks/useSessao';
 import useAcao from '../../hooks/useAcao';
-import { cadastrarOfertante, cadastrarOrganizacao } from '../../services/api';
+import useConsulta from '../../hooks/useConsulta';
+import { buscarBairros, cadastrarOfertante, cadastrarOrganizacao } from '../../services/api';
 import type { DadosCadastro } from '../../types';
 
 export default function Cadastro() {
@@ -17,7 +19,9 @@ export default function Cadastro() {
     const [cadastroCriado, setCadastroCriado] = useState<DadosCadastro | null>(null);
     const { sessao, entrar } = useSessao();
     const acao = useAcao();
+    const bairros = useConsulta(buscarBairros);
     const navegar = useNavigate();
+    const bairrosDisponiveis = !!bairros.dados?.length && !bairros.carregando && !bairros.erro;
 
     
     if (sessao)
@@ -40,7 +44,8 @@ export default function Cadastro() {
                 .toLowerCase(),
             senha: String(valores.get('senha') || ''),
             contato: String(valores.get('contato') || '').trim(),
-            bairro: String(valores.get('bairro') || '').trim(),
+            idBairro: Number(valores.get('idBairro')),
+            tipoOfertante: String(valores.get('tipoOfertante') || '') as DadosCadastro['tipoOfertante'],
             responsavel: String(valores.get('responsavel') || '').trim(),
         };
         const falhas: Record<string, string> = {};
@@ -48,12 +53,15 @@ export default function Cadastro() {
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dados.email)) falhas.email = 'Digite um e-mail válido.';
         if (dados.senha.length < 6) falhas.senha = 'Use pelo menos 6 caracteres.';
         if (dados.contato.replace(/\D/g, '').length < 10) falhas.contato = 'Informe um telefone com DDD.';
-        if (dados.bairro.length < 2) falhas.bairro = 'Conte em qual bairro você está.';
+        if (!bairros.dados?.some((bairro) => bairro.id === dados.idBairro))
+            falhas.idBairro = 'Selecione seu bairro.';
+        if (tipo === 'ofertante' && !['feirante', 'mercado', 'produtor'].includes(dados.tipoOfertante || ''))
+            falhas.tipoOfertante = 'Selecione como você oferece alimentos.';
         if (tipo === 'organizacao' && (dados.responsavel || '').length < 3)
             falhas.responsavel = 'Informe o nome de quem responde pela organização.';
         setErros(falhas);
         if (Object.keys(falhas).length) {
-            formulario.querySelector<HTMLInputElement>(`[name="${Object.keys(falhas)[0]}"]`)?.focus();
+            formulario.querySelector<HTMLInputElement | HTMLSelectElement>(`[name="${Object.keys(falhas)[0]}"]`)?.focus();
             return;
         }
         void acao.executar(async () => {
@@ -97,7 +105,21 @@ export default function Cadastro() {
                 ))}
             </div>
             <form onSubmit={enviar} noValidate>
-                <fieldset className="grid gap-4" disabled={acao.enviando || !!cadastroCriado}>
+                {bairros.carregando ? (
+                    <div className="mb-5">
+                        <AvisoEstado tipo="carregando" mensagem="Preparando seu cadastro…" compacto />
+                    </div>
+                ) : !bairrosDisponiveis ? (
+                    <div className="mb-5">
+                        <AvisoEstado
+                            tipo="erro"
+                            mensagem={bairros.erro || 'Não há bairros disponíveis para cadastro no momento. Tente novamente em instantes.'}
+                            tentarNovamente={bairros.recarregar}
+                            compacto
+                        />
+                    </div>
+                ) : null}
+                <fieldset className="grid gap-4" disabled={acao.enviando || !!cadastroCriado || !bairrosDisponiveis}>
                     <CampoFormulario
                         name="nome"
                         label={tipo === 'ofertante' ? 'Nome do ofertante ou negócio' : 'Nome da organização'}
@@ -106,6 +128,28 @@ export default function Cadastro() {
                         erro={erros.nome}
                         required
                     />
+                    {tipo === 'ofertante' && (
+                        <div>
+                            <label htmlFor="tipo-ofertante" className="mb-2 block text-sm font-semibold">
+                                Como você oferece alimentos? <span className="text-vinho" aria-hidden="true">*</span>
+                            </label>
+                            <select
+                                id="tipo-ofertante"
+                                name="tipoOfertante"
+                                className="campo"
+                                defaultValue=""
+                                required
+                                aria-invalid={!!erros.tipoOfertante}
+                                aria-describedby={erros.tipoOfertante ? 'erro-tipo-ofertante' : undefined}
+                            >
+                                <option value="">Selecione uma opção</option>
+                                <option value="feirante">Feirante</option>
+                                <option value="mercado">Mercado</option>
+                                <option value="produtor">Produtor</option>
+                            </select>
+                            {erros.tipoOfertante && <p id="erro-tipo-ofertante" className="mt-1.5 text-xs text-vinho">{erros.tipoOfertante}</p>}
+                        </div>
+                    )}
                     <CampoFormulario
                         name="email"
                         label="E-mail"
@@ -132,18 +176,32 @@ export default function Cadastro() {
                             label="Telefone com DDD"
                             type="tel"
                             autoComplete="tel"
-                            maxLength={25}
+                            maxLength={20}
                             erro={erros.contato}
                             required
                         />
-                        <CampoFormulario
-                            name="bairro"
-                            label="Bairro"
-                            autoComplete="address-level3"
-                            maxLength={80}
-                            erro={erros.bairro}
-                            required
-                        />
+                        <div>
+                            <label htmlFor="bairro-cadastro" className="mb-2 block text-sm font-semibold">
+                                Bairro <span className="text-vinho" aria-hidden="true">*</span>
+                            </label>
+                            <select
+                                id="bairro-cadastro"
+                                name="idBairro"
+                                className="campo"
+                                defaultValue=""
+                                required
+                                aria-invalid={!!erros.idBairro}
+                                aria-describedby={erros.idBairro ? 'erro-bairro' : undefined}
+                            >
+                                <option value="">Selecione seu bairro</option>
+                                {bairros.dados?.map((bairro) => (
+                                    <option key={bairro.id} value={bairro.id}>
+                                        {bairro.nome} · {bairro.cidade}/{bairro.uf}
+                                    </option>
+                                ))}
+                            </select>
+                            {erros.idBairro && <p id="erro-bairro" className="mt-1.5 text-xs text-vinho">{erros.idBairro}</p>}
+                        </div>
                     </div>
                     {tipo === 'organizacao' && (
                         <CampoFormulario
@@ -157,6 +215,13 @@ export default function Cadastro() {
                     )}
                 </fieldset>
                 <div className="mt-5 grid gap-4">
+                    {acao.enviando && (
+                        <AvisoEstado
+                            tipo="carregando"
+                            mensagem={cadastroCriado ? 'Entrando na sua conta…' : 'Criando sua conta…'}
+                            compacto
+                        />
+                    )}
                     <Feedback
                         erro={acao.erro}
                         sucesso={
@@ -170,7 +235,7 @@ export default function Cadastro() {
                             O cadastro já foi salvo. O próximo clique tenta somente o login.
                         </p>
                     )}
-                    <button type="submit" disabled={acao.enviando} className="botao bg-verde text-creme">
+                    <button type="submit" disabled={acao.enviando || !bairrosDisponiveis} className="botao bg-verde text-creme">
                         {acao.enviando
                             ? 'Só um instante…'
                             : cadastroCriado

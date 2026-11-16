@@ -17,7 +17,7 @@ export default function ReservasLote({ loteId, aoConfirmar }: { loteId: number; 
     function confirmar() {
         if (!selecionada) return;
         void acao.executar(async () => {
-            await confirmarRetirada(selecionada.id);
+            await confirmarRetirada(selecionada.id, selecionada.quantidade);
             setSelecionada(null);
             consulta.recarregar();
             aoConfirmar();

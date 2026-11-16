@@ -1,17 +1,18 @@
-import { useEffect, useState, type ImgHTMLAttributes } from 'react';
+import { useState, type ImgHTMLAttributes } from 'react';
 
 import Icone from '../Icone/Icone';
 
-export default function Imagem({
+export default function Imagem(props: ImgHTMLAttributes<HTMLImageElement>) {
+    return <ConteudoImagem key={props.src || ''} {...props} />;
+}
+
+function ConteudoImagem({
     src,
     alt = '',
     className = '',
     ...props
 }: ImgHTMLAttributes<HTMLImageElement>) {
     const [falhou, setFalhou] = useState(false);
-    useEffect(() => {
-        setFalhou(false);
-    }, [src]);
     
     if (!src || falhou)
         return (
