@@ -7,7 +7,7 @@ export default function MainLayout(){
         <>
         
         <Header />
-        <main id="conteudo" className="min-h[70vh] pt-20" tabIndex={-1}>
+        <main id="conteudo" className="min-h-[70vh] pt-20" tabIndex={-1}>
             <Outlet />
         </main>
         <Footer />
