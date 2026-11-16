@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import useSessao from '../../hooks/useSessao';
 import Logo from '../Logo/Logo';
 import Icone from '../Icone/Icone';
@@ -15,12 +15,10 @@ const links = [
 
 export default function Header() {
     const { sessao, sair } = useSessao();
+    const perfil = sessao?.tipo === 'administrador' ? 'Administrador' : sessao?.tipo === 'organizacao' ? 'Organização' : 'Ofertante';
+    const iniciais = sessao?.pessoa.nome.trim().split(/\s+/).slice(0, 2).map((parte) => parte[0]).join('').toUpperCase();
     const [aberto, setAberto] = useState(false);
-    const localizacao = useLocation();
     const cabecalho = useRef<HTMLElement>(null);
-    useEffect(() => {
-        setAberto(false);
-    }, [localizacao.pathname, localizacao.search]);
     useEffect(() => {
         function fechar(evento: KeyboardEvent) {
             if (evento.key === 'Escape') setAberto(false);
@@ -58,25 +56,32 @@ export default function Header() {
                         </NavLink>
                     ))}
                 </nav>
-                <div className="ml-auto hidden items-center gap-3 sm:flex lg:ml-0">
+                <div className="ml-auto flex items-center gap-3 lg:ml-0">
                     {sessao ? (
                         <>
                             <Link
-                                className="botao-pequeno bg-verde text-creme"
+                                className="botao-pequeno hidden bg-verde text-creme sm:inline-flex"
                                 to={sessao.tipo === 'administrador' ? '/admin' : '/app'}
                             >
-                                Meu painel <Icone nome="diagonal" />
+                                {sessao.tipo === 'administrador' ? 'Painel ADM' : 'Meu painel'} <Icone nome="diagonal" />
                             </Link>
                             <Link
                                 to="/app/conta"
-                                className="p-2 text-verde-escuro hover:text-verde"
-                                aria-label="Minha conta"
+                                className="flex shrink-0 items-center gap-2 text-verde-escuro hover:text-verde"
+                                aria-label={`Minha conta: ${sessao.pessoa.nome}, ${perfil}`}
+                                title={`${sessao.pessoa.nome} · ${perfil}`}
                             >
-                                <Icone nome="conta" />
+                                <span className={`flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold text-creme ${sessao.tipo === 'administrador' ? 'bg-vinho' : 'bg-verde'}`}>
+                                    {sessao.tipo === 'administrador' ? 'ADM' : iniciais}
+                                </span>
+                                <span className="hidden max-w-28 xl:block">
+                                    <span className="block truncate text-xs font-semibold">{sessao.pessoa.nome.split(' ')[0]}</span>
+                                    <span className="block text-[10px] text-tinta/60">{perfil}</span>
+                                </span>
                             </Link>
                             <button
                                 onClick={sair}
-                                className="p-2 text-verde-escuro"
+                                className="hidden p-2 text-verde-escuro sm:inline-flex"
                                 aria-label="Sair da conta"
                             >
                                 <Icone nome="sair" />
@@ -87,7 +92,7 @@ export default function Header() {
                             <Link className="botao-pequeno botao-entrar" to="/login">
                                 Entrar
                             </Link>
-                            <Link to="/cadastro" className="botao-pequeno bg-amarelo text-verde-escuro">
+                            <Link to="/cadastro" className="botao-pequeno hidden bg-amarelo text-verde-escuro sm:inline-flex">
                                 Faça parte <Icone nome="seta" className="h-3 w-3 text-xs" />
                             </Link>
                         </>
@@ -121,11 +126,14 @@ export default function Header() {
                     ))}
                     {sessao ? (
                         <>
+                            <p className="px-4 py-3 text-sm text-verde-escuro">
+                                <strong>{sessao.pessoa.nome}</strong> · {perfil}
+                            </p>
                             <Link
                                 to={sessao.tipo === 'administrador' ? '/admin' : '/app'}
                                 className="botao bg-verde text-creme"
                             >
-                                Meu painel <Icone nome="grafico" className="h-4 w-4" />
+                                {sessao.tipo === 'administrador' ? 'Painel ADM' : 'Meu painel'} <Icone nome="grafico" className="h-4 w-4" />
                             </Link>
                             <Link to="/app/conta" className="botao botao-contorno">
                                 <Icone nome="conta" className="h-4 w-4" />

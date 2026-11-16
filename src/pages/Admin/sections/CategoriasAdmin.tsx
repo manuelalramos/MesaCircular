@@ -23,7 +23,7 @@ export default function CategoriasAdmin() {
         }
         void acao.executar(
             async () => {
-                if (editar) await editarCategoria(editar.id, nome.trim());
+                if (editar) await editarCategoria(editar.id, nome.trim(), editar.descricao);
                 else await criarCategoria(nome.trim());
                 setNome('');
                 setEditar(null);

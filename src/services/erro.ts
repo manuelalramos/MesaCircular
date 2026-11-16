@@ -32,7 +32,13 @@ function acentuarMensagem(mensagem: string): string {
         'Campos email, senha e perfil sao obrigatorios': 'Informe o e-mail, a senha e o perfil de acesso.',
         'Perfil invalido: use ofertante, organizacao ou administrador': 'Selecione um perfil de acesso válido.',
     };
+    const campos: Record<string, string> = {
+        nomeRemetente: 'nome', nomeCategoria: 'nome da categoria', descricaoCategoria: 'descrição da categoria',
+        idLote: 'lote', idOrganizacao: 'organização', quantidadeReservada: 'quantidade reservada',
+        quantidadeRetirada: 'quantidade retirada', distanciaKm: 'distância', statusReserva: 'status da reserva',
+    };
     return (mensagensPublicas[mensagem] || mensagem)
+        .replace(/\b(nomeRemetente|nomeCategoria|descricaoCategoria|idLote|idOrganizacao|quantidadeReservada|quantidadeRetirada|distanciaKm|statusReserva)\b/g, (campo) => campos[campo])
         .replace(/\be (?=obrigatori[oa]s?\b)/gi, 'é ')
         .replace(/\b[a-z]+\b/gi, (palavra) => {
             const corrigida = acentos[palavra.toLowerCase()];

@@ -69,8 +69,8 @@ function ReservarFormulario({
                 label={`Quanto você precisa? (${lote.unidade})`}
                 type="number"
                 inputMode="decimal"
-                min={lote.unidade === 'kg' ? 0.01 : 1}
-                step={lote.unidade === 'kg' ? '0.01' : '1'}
+                min={['kg', 'l'].includes(lote.unidade) ? 0.01 : 1}
+                step={['kg', 'l'].includes(lote.unidade) ? '0.01' : '1'}
                 max={lote.saldo}
                 value={quantidade}
                 onChange={(e) => setQuantidade(e.target.value)}

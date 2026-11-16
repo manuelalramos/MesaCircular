@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import type { DadosLote, Lote } from '../../types';
-import { buscarCategorias, editarLote, publicarLote } from '../../services/api';
-import { dataParaCampo } from '../../services/regras';
+import { buscarBairros, buscarCategorias, editarLote, publicarLote } from '../../services/api';
+import { dataParaCampo, prazoNoFuturo, validarLinkImagem } from '../../services/regras';
 import useConsulta from '../../hooks/useConsulta';
 import useSessao from '../../hooks/useSessao';
 import useAcao from '../../hooks/useAcao';
@@ -10,6 +10,7 @@ import AvisoEstado from '../AvisoEstado/AvisoEstado';
 import CampoFormulario from '../CampoFormulario/CampoFormulario';
 import Feedback from '../Feedback/Feedback';
 import Icone from '../Icone/Icone';
+import Imagem from '../Imagem/Imagem';
 
 interface FormularioLoteProps {
     lote?: Lote;
@@ -18,10 +19,14 @@ interface FormularioLoteProps {
 }
 export default function FormularioLote({ lote, aoSalvar, aoCancelar }: FormularioLoteProps) {
     const categorias = useConsulta(buscarCategorias);
+    const bairros = useConsulta(buscarBairros);
     const { sessao } = useSessao();
     const acao = useAcao();
     const [erros, setErros] = useState<Record<string, string>>({});
     const [publicado, setPublicado] = useState<Lote | null>(null);
+    const [minimoPrazo] = useState(() => dataParaCampo(new Date().toISOString()));
+    const [imagem, setImagem] = useState(lote?.imagem || '');
+    const linkImagem = imagem.trim();
 
     function enviar(evento: FormEvent<HTMLFormElement>) {
         evento.preventDefault();
@@ -33,35 +38,34 @@ export default function FormularioLote({ lote, aoSalvar, aoCancelar }: Formulari
             unidade: String(campos.get('unidade')),
             categoriaId: Number(campos.get('categoria')),
             prazoRetirada: String(campos.get('prazoRetirada')),
-            bairro: String(campos.get('bairro') || '').trim(),
+            idBairro: Number(campos.get('idBairro')),
             local: String(campos.get('local') || '').trim(),
             ofertanteId: lote?.ofertante.id || sessao!.pessoa.id,
+            imagem: linkImagem,
+            ativo: lote?.ativo ?? true,
         };
         const falhas: Record<string, string> = {};
         if (dados.descricao.length < 5) falhas.descricao = 'Descreva o alimento em pelo menos 5 caracteres.';
         if (!Number.isFinite(dados.quantidade) || dados.quantidade <= 0)
             falhas.quantidade = 'Informe uma quantidade maior que zero.';
-        if (dados.unidade !== 'kg' && !Number.isInteger(dados.quantidade))
+        if (!['kg', 'l'].includes(dados.unidade) && !Number.isInteger(dados.quantidade))
             falhas.quantidade = 'Para esta unidade, use uma quantidade inteira.';
         if (lote && dados.quantidade < lote.quantidade - lote.saldo)
             falhas.quantidade = `Já há ${lote.quantidade - lote.saldo} ${lote.unidade} comprometidos.`;
         if (lote && lote.saldo < lote.quantidade && dados.unidade !== lote.unidade)
             falhas.unidade = 'A unidade não pode mudar depois de receber reservas.';
         if (!dados.categoriaId) falhas.categoria = 'Escolha uma categoria.';
-        if (
-            !dados.prazoRetirada ||
-            !Number.isFinite(new Date(dados.prazoRetirada).getTime()) ||
-            new Date(dados.prazoRetirada).getTime() <= Date.now()
-        )
+        if (!prazoNoFuturo(dados.prazoRetirada))
             falhas.prazoRetirada = 'Escolha um prazo no futuro.';
-        if (dados.bairro.length < 2) falhas.bairro = 'Informe o bairro da retirada.';
+        if (!bairros.dados?.some((bairro) => bairro.id === dados.idBairro)) falhas.idBairro = 'Selecione o bairro da retirada.';
         if (dados.local.length < 5) falhas.local = 'Informe o endereço e um ponto de referência.';
+        const erroImagem = validarLinkImagem(linkImagem);
+        if (erroImagem) falhas.imagem = erroImagem;
         setErros(falhas);
         if (Object.keys(falhas).length) {
-            formulario.querySelector<HTMLInputElement>(`[name="${Object.keys(falhas)[0]}"]`)?.focus();
+            formulario.querySelector<HTMLInputElement | HTMLSelectElement>(`[name="${Object.keys(falhas)[0]}"]`)?.focus();
             return;
         }
-        dados.prazoRetirada = new Date(dados.prazoRetirada).toISOString();
         void acao.executar(async () => {
             const resultado = lote ? await editarLote(lote.id, dados) : await publicarLote(dados);
             if (aoSalvar) aoSalvar();
@@ -71,6 +75,9 @@ export default function FormularioLote({ lote, aoSalvar, aoCancelar }: Formulari
     if (categorias.carregando) return <AvisoEstado tipo="carregando" mensagem="Buscando as categorias…" />;
     if (categorias.erro)
         return <AvisoEstado tipo="erro" mensagem={categorias.erro} tentarNovamente={categorias.recarregar} />;
+    if (bairros.carregando) return <AvisoEstado tipo="carregando" mensagem="Buscando os bairros…" />;
+    if (bairros.erro) return <AvisoEstado tipo="erro" mensagem={bairros.erro} tentarNovamente={bairros.recarregar} />;
+    if (!bairros.dados?.length) return <AvisoEstado tipo="vazio" mensagem="Ainda não há bairros disponíveis para publicar um lote." />;
     if (!categorias.dados?.length)
         return (
             <AvisoEstado
@@ -97,6 +104,7 @@ export default function FormularioLote({ lote, aoSalvar, aoCancelar }: Formulari
                         onClick={() => {
                             setPublicado(null);
                             setErros({});
+                            setImagem('');
                         }}
                     >
                         Publicar outro
@@ -117,6 +125,35 @@ export default function FormularioLote({ lote, aoSalvar, aoCancelar }: Formulari
                     maxLength={180}
                     erro={erros.descricao}
                 />
+                <div>
+                    <CampoFormulario
+                        name="imagem"
+                        label="Link da foto (opcional)"
+                        type="url"
+                        inputMode="url"
+                        autoComplete="off"
+                        spellCheck={false}
+                        maxLength={500}
+                        value={imagem}
+                        onChange={(evento) => setImagem(evento.target.value)}
+                        placeholder="https://exemplo.com/foto-do-alimento.jpg"
+                        ajuda="Cole um link público direto para a imagem. Sem link, usamos a foto padrão da categoria."
+                        erro={erros.imagem}
+                    />
+                    {linkImagem && !validarLinkImagem(linkImagem) && (
+                        <figure className="mt-4 max-w-sm">
+                            <Imagem src={linkImagem} alt="Prévia da foto do lote" className="h-44 w-full rounded-2xl object-cover" />
+                            <figcaption className="mt-2 text-xs leading-5 text-tinta/60">
+                                Prévia da foto. Se ela não aparecer, confira se o link abre uma imagem pública.
+                            </figcaption>
+                        </figure>
+                    )}
+                    {imagem && (
+                        <button type="button" className="mt-3 text-xs font-semibold text-vinho underline underline-offset-4" onClick={() => setImagem('')}>
+                            Remover foto
+                        </button>
+                    )}
+                </div>
                 <div className="grid gap-5 sm:grid-cols-2">
                     <CampoFormulario
                         name="quantidade"
@@ -142,9 +179,10 @@ export default function FormularioLote({ lote, aoSalvar, aoCancelar }: Formulari
                             aria-describedby={erros.unidade ? 'erro-unidade' : undefined}
                         >
                             <option value="kg">Quilos (kg)</option>
-                            <option value="unidades">Unidades</option>
-                            <option value="caixas">Caixas</option>
-                            <option value="maços">Maços</option>
+                            <option value="un">Unidades (un)</option>
+                            <option value="l">Litros (l)</option>
+                            <option value="cx">Caixas (cx)</option>
+                            <option value="pct">Pacotes (pct)</option>
                         </select>
                         {erros.unidade && (
                             <p id="erro-unidade" className="mt-2 text-xs text-vinho">
@@ -184,23 +222,24 @@ export default function FormularioLote({ lote, aoSalvar, aoCancelar }: Formulari
                         name="prazoRetirada"
                         label="Retirar até quando?"
                         type="datetime-local"
-                        min={dataParaCampo(new Date().toISOString())}
+                        min={minimoPrazo}
                         defaultValue={lote ? dataParaCampo(lote.prazoRetirada) : ''}
                         required
                         erro={erros.prazoRetirada}
                     />
                 </div>
-                <CampoFormulario
-                    name="bairro"
-                    label="Bairro"
-                    defaultValue={
-                        lote?.bairro ||
-                        (sessao?.pessoa && 'bairro' in sessao.pessoa ? sessao.pessoa.bairro : '')
-                    }
-                    maxLength={80}
-                    required
-                    erro={erros.bairro}
-                />
+                <div>
+                    <label htmlFor="bairro-publicacao" className="mb-2 block text-sm font-semibold">Bairro da retirada *</label>
+                    <select
+                        id="bairro-publicacao" name="idBairro" className="campo" required
+                        defaultValue={lote?.idBairro || (sessao?.pessoa && 'idBairro' in sessao.pessoa ? sessao.pessoa.idBairro : '')}
+                        aria-invalid={!!erros.idBairro} aria-describedby={erros.idBairro ? 'erro-bairro-publicacao' : undefined}
+                    >
+                        <option value="">Selecione o bairro</option>
+                        {bairros.dados.map((bairro) => <option key={bairro.id} value={bairro.id}>{bairro.nome} · {bairro.cidade}/{bairro.uf}</option>)}
+                    </select>
+                    {erros.idBairro && <p id="erro-bairro-publicacao" className="mt-1.5 text-xs text-vinho">{erros.idBairro}</p>}
+                </div>
                 <CampoFormulario
                     name="local"
                     label="Endereço e ponto de referência"

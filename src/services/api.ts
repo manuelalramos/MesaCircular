@@ -12,16 +12,38 @@ import type {
     Perfil,
     Reserva,
     Sessao,
+    Estatisticas,
 } from '../types';
+import {
+    converterBairro, converterCategoria, converterLote, converterOfertante, converterOrganizacao, converterReserva, listaApi,
+    type BairroApi, type CategoriaApi, type LoteApi, type PessoaApi, type ReferenciasLote, type ReservaApi,
+} from './contrato.ts';
 
 import { ErroApi } from './erro.ts';
 
 export const API_BASE = import.meta.env?.VITE_API_BASE || 'https://mesacircular-api.onrender.com'; // api atualizada
 let sessaoAtual: Sessao | null = null;
+const leiturasEmAndamento = new Map<string, Promise<unknown>>();
 export function definirSessaoApi(sessao: Sessao | null) {
     sessaoAtual = sessao;
+    leiturasEmAndamento.clear();
 }
-async function requisicao<T>(caminho: string, metodo = 'GET', dados?: unknown): Promise<T> {
+function requisicao<T>(caminho: string, metodo = 'GET', dados?: unknown): Promise<T> {
+    if (metodo !== 'GET') {
+        leiturasEmAndamento.clear();
+        return executarRequisicao<T>(caminho, metodo, dados).finally(() => leiturasEmAndamento.clear());
+    }
+    const chave = JSON.stringify([caminho, sessaoAtual?.tipo, sessaoAtual?.pessoa.id, sessaoAtual?.token]);
+    const pendente = leiturasEmAndamento.get(chave);
+    if (pendente) return pendente as Promise<T>;
+    const leitura = executarRequisicao<T>(caminho, metodo, dados).finally(() => {
+        if (leiturasEmAndamento.get(chave) === leitura) leiturasEmAndamento.delete(chave);
+    });
+    leiturasEmAndamento.set(chave, leitura);
+    return leitura;
+}
+
+async function executarRequisicao<T>(caminho: string, metodo: string, dados?: unknown): Promise<T> {
     const controle = new AbortController();
     // Dá tempo para o serviço iniciar no Render, sem repetir gravações automaticamente.
     const limite = setTimeout(() => controle.abort(), 75000);
@@ -106,39 +128,46 @@ export async function login(perfil: Perfil, dados: Credenciais): Promise<Sessao>
     const bairro = retorno.idBairro
         ? await requisicao<BairroApi>(`/bairros/${retorno.idBairro}`)
         : undefined;
-    const participante = { ...pessoa, contato: retorno.contato || '', bairro: bairro?.nomeBairro || '' };
+    const participante = { ...pessoa, contato: retorno.contato || '', bairro: bairro?.nomeBairro || '', idBairro: retorno.idBairro || 0 };
     if (perfil === 'ofertante') return { tipo: perfil, pessoa: participante };
     return { tipo: perfil, pessoa: { ...participante, responsavel: retorno.nomeResponsavel || '' } };
 }
 
-interface PessoaApi {
-    idOfertante?: number;
-    nomeOfertante?: string;
-    idOrganizacao?: number;
-    nomeOrganizacao?: string;
-    idAdministrador?: number;
-    nomeAdministrador?: string;
-    email: string;
-    contato?: string;
-    idBairro?: number;
-    nomeResponsavel?: string;
-}
-
-interface BairroApi {
-    idBairro: number;
-    nomeBairro: string;
-    nomeCidade: string;
-    uf: string;
-}
-
 export async function buscarBairros(): Promise<Bairro[]> {
-    const bairros = await requisicao<BairroApi[]>('/bairros');
-    return bairros.map((bairro) => ({
-        id: bairro.idBairro,
-        nome: bairro.nomeBairro,
-        cidade: bairro.nomeCidade,
-        uf: bairro.uf,
-    }));
+    return listaApi<BairroApi>(await requisicao<unknown>('/bairros')).map(converterBairro);
+}
+
+async function carregarReferencias(): Promise<ReferenciasLote> {
+    const [bairros, categorias, ofertantes] = await Promise.all([
+        buscarBairros(), buscarCategorias(), requisicao<unknown>('/ofertantes'),
+    ]);
+    return {
+        bairros, categorias,
+        ofertantes: listaApi<PessoaApi>(ofertantes).map((pessoa) => converterOfertante(pessoa, bairros)),
+    };
+}
+
+async function lerLotes(caminho: string): Promise<Lote[]> {
+    const lotes = listaApi<LoteApi>(await requisicao<unknown>(caminho));
+    if (!lotes.length) return [];
+    const referencias = await carregarReferencias();
+    return lotes.map((lote) => converterLote(lote, referencias));
+}
+
+async function lerReservas(caminho: string): Promise<Reserva[]> {
+    const reservas = listaApi<ReservaApi>(await requisicao<unknown>(caminho));
+    if (!reservas.length) return [];
+    const [lotes, organizacoes] = await Promise.all([buscarLotes(), buscarOrganizacoes()]);
+    return reservas.map((reserva) => converterReserva(reserva, lotes, organizacoes));
+}
+
+function dadosLoteJava(dados: DadosLote) {
+    return {
+        descricaoLote: dados.descricao, quantidade: dados.quantidade, unidade: dados.unidade,
+        idCategoria: dados.categoriaId, dataPrazoRetirada: dados.prazoRetirada,
+        idBairro: dados.idBairro, localRetirada: dados.local, idOfertante: dados.ofertanteId,
+        imagemUrl: dados.imagem || null, ativo: dados.ativo === false ? 'N' : 'S',
+    };
 }
 
 export const cadastrarOfertante = (dados: DadosCadastro) =>
@@ -161,49 +190,79 @@ export const cadastrarOrganizacao = (dados: DadosCadastro) =>
         contato: dados.contato,
     });
 
-export const buscarLotes = () => requisicao<Lote[]>('/lotes');
+export const buscarLotes = () => lerLotes('/lotes');
 
-export const buscarLote = (id: number) => requisicao<Lote>(`/lotes/${id}`);
+export async function buscarLote(id: number): Promise<Lote> {
+    const [lote, referencias] = await Promise.all([requisicao<LoteApi>(`/lotes/${id}`), carregarReferencias()]);
+    return converterLote(lote, referencias);
+}
 
-export const publicarLote = (dados: DadosLote) => requisicao<Lote>('/lotes', 'POST', dados);
+export async function publicarLote(dados: DadosLote): Promise<Lote> {
+    const referencias = await carregarReferencias();
+    return converterLote(await requisicao<LoteApi>('/lotes', 'POST', dadosLoteJava(dados)), referencias);
+}
 
-export const editarLote = (id: number, dados: DadosLote) => requisicao<Lote>(`/lotes/${id}`, 'PUT', dados);
+export async function editarLote(id: number, dados: DadosLote): Promise<Lote> {
+    const referencias = await carregarReferencias();
+    return converterLote(await requisicao<LoteApi>(`/lotes/${id}`, 'PUT', dadosLoteJava(dados)), referencias);
+}
 
 export const excluirLote = (id: number) => requisicao<void>(`/lotes/${id}`, 'DELETE');
 
-export const buscarMeusLotes = (id: number) => requisicao<Lote[]>(`/ofertantes/${id}/lotes`);
+export const buscarMeusLotes = (id: number) => lerLotes(`/ofertantes/${id}/lotes`);
 
-export const buscarReservasLote = (id: number) => requisicao<Reserva[]>(`/lotes/${id}/reservas`);
+export const buscarReservasLote = (id: number) => lerReservas(`/lotes/${id}/reservas`);
 
-export const buscarReservas = () => requisicao<Reserva[]>('/reservas');
+export const buscarReservas = () => lerReservas('/reservas');
 
-export const buscarMinhasReservas = (id: number) => requisicao<Reserva[]>(`/organizacoes/${id}/reservas`);
+export const buscarMinhasReservas = (id: number) => lerReservas(`/organizacoes/${id}/reservas`);
 
-export const reservarLote = (dados: DadosReserva) => requisicao<Reserva>('/reservas', 'POST', dados);
+export const reservarLote = (dados: DadosReserva) => requisicao<ReservaApi>('/reservas', 'POST', {
+    idLote: dados.loteId, idOrganizacao: dados.organizacaoId, quantidadeReservada: dados.quantidade,
+});
 
-export const confirmarRetirada = (id: number) =>
-    requisicao<Reserva>(`/reservas/${id}`, 'PUT', { status: 'RETIRADA' });
+export const confirmarRetirada = (id: number, quantidade: number) =>
+    requisicao<ReservaApi>(`/reservas/${id}`, 'PUT', { statusReserva: 'retirada', quantidadeRetirada: quantidade });
 
 export const cancelarReserva = (id: number) => requisicao<void>(`/reservas/${id}`, 'DELETE');
 
-export const buscarCategorias = () => requisicao<Categoria[]>('/categorias');
+export async function buscarCategorias(): Promise<Categoria[]> {
+    return listaApi<CategoriaApi>(await requisicao<unknown>('/categorias')).map(converterCategoria);
+}
 
-export const criarCategoria = (nome: string) => requisicao<Categoria>('/categorias', 'POST', { nome });
+export const criarCategoria = async (nome: string) =>
+    converterCategoria(await requisicao<CategoriaApi>('/categorias', 'POST', { nomeCategoria: nome }));
 
-export const editarCategoria = (id: number, nome: string) =>
-    requisicao<Categoria>(`/categorias/${id}`, 'PUT', { nome });
+export const editarCategoria = async (id: number, nome: string, descricao?: string) =>
+    converterCategoria(await requisicao<CategoriaApi>(`/categorias/${id}`, 'PUT', { nomeCategoria: nome, descricaoCategoria: descricao }));
 
 export const excluirCategoria = (id: number) => requisicao<void>(`/categorias/${id}`, 'DELETE');
 
-export const buscarOfertantes = () => requisicao<Ofertante[]>('/ofertantes');
-export const buscarOrganizacoes = () => requisicao<Organizacao[]>('/organizacoes');
+export async function buscarOfertantes(): Promise<Ofertante[]> {
+    const [pessoas, bairros] = await Promise.all([requisicao<unknown>('/ofertantes'), buscarBairros()]);
+    return listaApi<PessoaApi>(pessoas).map((pessoa) => converterOfertante(pessoa, bairros));
+}
+export async function buscarOrganizacoes(): Promise<Organizacao[]> {
+    const [pessoas, bairros] = await Promise.all([requisicao<unknown>('/organizacoes'), buscarBairros()]);
+    return listaApi<PessoaApi>(pessoas).map((pessoa) => converterOrganizacao(pessoa, bairros));
+}
 export const excluirOfertante = (id: number) => requisicao<void>(`/ofertantes/${id}`, 'DELETE');
 export const excluirOrganizacao = (id: number) => requisicao<void>(`/organizacoes/${id}`, 'DELETE');
 
 
 
-export const enviarContato = (dados: DadosContato) => requisicao<void>('/contatos', 'POST', dados);
+export const enviarContato = (dados: DadosContato) => requisicao<void>('/contatos', 'POST', {
+    nomeRemetente: dados.nome, email: dados.email, assunto: dados.assunto, mensagem: dados.mensagem,
+});
 export const alterarEmail = (perfil: Perfil, id: number, email: string, senhaAtual: string) =>
     requisicao<void>(`/${recursos[perfil]}/${id}/email`, 'PUT', { email, senhaAtual });
 export const alterarSenha = (perfil: Perfil, id: number, senhaAtual: string, novaSenha: string) =>
     requisicao<void>(`/${recursos[perfil]}/${id}/senha`, 'PUT', { senhaAtual, novaSenha });
+
+export async function buscarEstatisticas(): Promise<Estatisticas> {
+    const dados = await requisicao<Estatisticas>('/estatisticas');
+    if (!dados || ![dados.quilos, dados.lotes, dados.organizacoes, dados.concluidas]
+        .every((numero) => typeof numero === 'number' && Number.isFinite(numero) && numero >= 0))
+        throw new ErroApi('Não foi possível carregar os números da comunidade. Tente novamente.', 502);
+    return dados;
+}
