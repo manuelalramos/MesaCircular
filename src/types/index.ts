@@ -1,4 +1,5 @@
 export type Perfil = 'ofertante' | 'organizacao' | 'administrador';
+export type TipoOfertante = 'feirante' | 'mercado' | 'produtor';
 export type StatusLote = 'DISPONIVEL' | 'RESERVADO' | 'RETIRADO' | 'VENCIDO';
 export type StatusReserva = 'ATIVA' | 'RETIRADA' | 'CANCELADA';
 
@@ -68,8 +69,16 @@ export interface Credenciais {
 export interface DadosCadastro extends Credenciais {
     nome: string;
     contato: string;
-    bairro: string;
+    idBairro: number;
+    tipoOfertante?: TipoOfertante;
     responsavel?: string;
+}
+
+export interface Bairro {
+    id: number;
+    nome: string;
+    cidade: string;
+    uf: string;
 }
 
 export interface DadosLote {

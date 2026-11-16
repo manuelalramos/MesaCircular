@@ -1,5 +1,5 @@
 import type {
-    Administrador,
+    Bairro,
     Categoria,
     Credenciais,
     DadosCadastro,
@@ -23,7 +23,7 @@ export function definirSessaoApi(sessao: Sessao | null) {
 }
 async function requisicao<T>(caminho: string, metodo = 'GET', dados?: unknown): Promise<T> {
     const controle = new AbortController();
-    // Demora do render
+    // Dá tempo para o serviço iniciar no Render, sem repetir gravações automaticamente.
     const limite = setTimeout(() => controle.abort(), 75000);
     try {
         const resposta = await fetch(`${API_BASE.replace(/\/$/, '')}${caminho}`, {
@@ -45,14 +45,17 @@ async function requisicao<T>(caminho: string, metodo = 'GET', dados?: unknown): 
 
         }
         if (!resposta.ok) {
-            const erro = conteudo as { mensagem?: string; message?: string } | undefined;
+            const erro = conteudo as { mensagem?: unknown; message?: unknown } | undefined;
             const mensagem =
                 resposta.status === 401
                     ? 'E-mail ou senha não conferem. Tente de novo.'
                     : resposta.status === 404
                         ? 'Esse registro não foi encontrado.'
-                        : 'Não foi possível concluir. Tente de novo.';
-            throw new ErroApi(erro?.mensagem || erro?.message || mensagem, resposta.status);
+                        : 'Não foi possível concluir agora. Aguarde um instante e tente novamente.';
+            const mensagemServidor = typeof erro?.mensagem === 'string'
+                ? erro.mensagem
+                : typeof erro?.message === 'string' ? erro.message : '';
+            throw new ErroApi(resposta.status >= 500 ? mensagem : mensagemServidor || mensagem, resposta.status);
         }
         return conteudo as T;
 
@@ -60,7 +63,7 @@ async function requisicao<T>(caminho: string, metodo = 'GET', dados?: unknown): 
         if (erro instanceof ErroApi) throw erro;
         if (erro instanceof DOMException && erro.name === 'AbortError')
             throw new ErroApi(
-                'A API está demorando para responder. Ela pode estar iniciando no Render. Tente de novo.',
+                'O serviço está demorando para responder. A primeira conexão pode levar um pouco mais de tempo. Aguarde um instante e tente novamente.',
                 408,
             );
         throw new ErroApi('Não foi possível carregar os dados. Confira sua conexão e tente de novo.', 0);
@@ -76,30 +79,87 @@ const recursos: Record<Perfil, string> = {
 };
 
 export async function login(perfil: Perfil, dados: Credenciais): Promise<Sessao> {
-    type RetornoLogin =
-        | Sessao
-        | { pessoa: Ofertante | Organizacao | Administrador; token?: string }
-        | Ofertante
-        | Organizacao
-        | Administrador;
-    const retorno = await requisicao<RetornoLogin>(`/${recursos[perfil]}/login`, 'POST', dados);
-    if (!retorno || typeof retorno !== 'object')
-        throw new ErroApi('A API respondeu sem os dados do cadastro. Confira o contrato do login.', 502);
-    // Aceita o cadastro direto ou conforme o DTO do Java.
-    const pessoa = 'pessoa' in retorno ? retorno.pessoa : retorno;
-    if (!pessoa?.id || !pessoa.nome)
-        throw new ErroApi('A API respondeu sem os dados do cadastro. Confira o contrato do login.', 502);
-    const token = 'token' in retorno ? retorno.token : undefined;
+    let retorno: PessoaApi;
+    try {
+        retorno = await requisicao<PessoaApi>(`/${recursos[perfil]}/login`, 'POST', dados);
+    } catch (erro) {
+        if (erro instanceof ErroApi && erro.status === 401) {
+            const mensagem = perfil === 'administrador'
+                ? 'Não foi possível entrar. Confira o e-mail e a senha do cadastro administrativo.'
+                : 'Não foi possível entrar. Confira o e-mail, a senha e o perfil selecionado. Se ainda não tem conta, faça seu cadastro.';
+            throw new ErroApi(mensagem, 401);
+        }
+        throw erro;
+    }
+    const falha = 'Não conseguimos concluir seu acesso agora. Aguarde um instante e tente novamente.';
+    if (!retorno || typeof retorno !== 'object') throw new ErroApi(falha, 502);
+    const id = perfil === 'ofertante' ? retorno.idOfertante
+        : perfil === 'organizacao' ? retorno.idOrganizacao : retorno.idAdministrador;
+    const nome = perfil === 'ofertante' ? retorno.nomeOfertante
+        : perfil === 'organizacao' ? retorno.nomeOrganizacao : retorno.nomeAdministrador;
+    if (typeof id !== 'number' || !Number.isInteger(id) || id <= 0 || typeof nome !== 'string' || !nome.trim()
+        || typeof retorno.email !== 'string' || !retorno.email.trim())
+        throw new ErroApi(falha, 502);
 
-    if (perfil === 'ofertante') return { tipo: perfil, pessoa: pessoa as Ofertante, token };
-    if (perfil === 'organizacao') return { tipo: perfil, pessoa: pessoa as Organizacao, token };
-    return { tipo: perfil, pessoa, token };
+    const pessoa = { id, nome, email: retorno.email };
+    if (perfil === 'administrador') return { tipo: perfil, pessoa };
+    const bairro = retorno.idBairro
+        ? await requisicao<BairroApi>(`/bairros/${retorno.idBairro}`)
+        : undefined;
+    const participante = { ...pessoa, contato: retorno.contato || '', bairro: bairro?.nomeBairro || '' };
+    if (perfil === 'ofertante') return { tipo: perfil, pessoa: participante };
+    return { tipo: perfil, pessoa: { ...participante, responsavel: retorno.nomeResponsavel || '' } };
 }
+
+interface PessoaApi {
+    idOfertante?: number;
+    nomeOfertante?: string;
+    idOrganizacao?: number;
+    nomeOrganizacao?: string;
+    idAdministrador?: number;
+    nomeAdministrador?: string;
+    email: string;
+    contato?: string;
+    idBairro?: number;
+    nomeResponsavel?: string;
+}
+
+interface BairroApi {
+    idBairro: number;
+    nomeBairro: string;
+    nomeCidade: string;
+    uf: string;
+}
+
+export async function buscarBairros(): Promise<Bairro[]> {
+    const bairros = await requisicao<BairroApi[]>('/bairros');
+    return bairros.map((bairro) => ({
+        id: bairro.idBairro,
+        nome: bairro.nomeBairro,
+        cidade: bairro.nomeCidade,
+        uf: bairro.uf,
+    }));
+}
+
 export const cadastrarOfertante = (dados: DadosCadastro) =>
-    requisicao<Ofertante>('/ofertantes', 'POST', dados);
+    requisicao<PessoaApi>('/ofertantes', 'POST', {
+        nomeOfertante: dados.nome,
+        tipoOfertante: dados.tipoOfertante,
+        idBairro: dados.idBairro,
+        email: dados.email,
+        senha: dados.senha,
+        contato: dados.contato,
+    });
 
 export const cadastrarOrganizacao = (dados: DadosCadastro) =>
-    requisicao<Organizacao>('/organizacoes', 'POST', dados);
+    requisicao<PessoaApi>('/organizacoes', 'POST', {
+        nomeOrganizacao: dados.nome,
+        nomeResponsavel: dados.responsavel,
+        idBairro: dados.idBairro,
+        email: dados.email,
+        senha: dados.senha,
+        contato: dados.contato,
+    });
 
 export const buscarLotes = () => requisicao<Lote[]>('/lotes');
 
