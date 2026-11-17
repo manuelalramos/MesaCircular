@@ -15,10 +15,6 @@ export function statusDoLote(lote: Lote, agora = Date.now()): StatusLote {
     return lote.status;
 }
 
-export function prazoDivergente(lote: Lote, agora = Date.now()): boolean {
-    return lote.ativo && lote.status === 'VENCIDO' && instanteDaData(lote.prazoRetirada) > agora;
-}
-
 
 export function validarReserva(lote: Lote, quantidade: number, jaReservou = false): string {
     if (jaReservou) return 'Sua organização já tem uma reserva ativa neste lote.';
