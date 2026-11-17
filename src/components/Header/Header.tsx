@@ -42,7 +42,10 @@ export default function Header() {
             <a href="#conteudo" className="skip-link">
                 Pular para o conteúdo
             </a>
-            <div className="container-page flex h-20 items-center justify-between gap-6">
+            <p className="flex h-6 items-center justify-center bg-verde-escuro px-2 text-center text-[10px] text-creme sm:text-xs">
+                Atendemos apenas a Região Metropolitana de São Paulo
+            </p>
+            <div className="container-page flex h-20 items-center justify-between gap-3 sm:gap-5">
                 <Logo />
                 <nav aria-label="Navegação principal" className="hidden items-center gap-6 lg:flex">
                     {links.map((link) => (
@@ -60,23 +63,16 @@ export default function Header() {
                     {sessao ? (
                         <>
                             <Link
-                                className="botao-pequeno hidden bg-verde text-creme sm:inline-flex"
                                 to={sessao.tipo === 'administrador' ? '/admin' : '/app'}
-                            >
-                                {sessao.tipo === 'administrador' ? 'Painel ADM' : 'Meu painel'} <Icone nome="diagonal" />
-                            </Link>
-                            <Link
-                                to="/app/conta"
-                                className="flex shrink-0 items-center gap-2 text-verde-escuro hover:text-verde"
-                                aria-label={`Minha conta: ${sessao.pessoa.nome}, ${perfil}`}
+                                className="flex min-w-0 items-center gap-2 text-verde-escuro hover:text-verde"
+                                aria-label={`${perfil}: ${sessao.pessoa.nome}. Abrir ${sessao.tipo === 'administrador' ? 'administração' : 'meu resumo'}`}
                                 title={`${sessao.pessoa.nome} · ${perfil}`}
                             >
                                 <span className={`flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold text-creme ${sessao.tipo === 'administrador' ? 'bg-vinho' : 'bg-verde'}`}>
-                                    {sessao.tipo === 'administrador' ? 'ADM' : iniciais}
+                                    {sessao.tipo === 'administrador' ? <Icone nome="escudo" className="h-4 w-4" /> : iniciais}
                                 </span>
-                                <span className="hidden max-w-28 xl:block">
-                                    <span className="block truncate text-xs font-semibold">{sessao.pessoa.nome.split(' ')[0]}</span>
-                                    <span className="block text-[10px] text-tinta/60">{perfil}</span>
+                                <span className="max-w-28 truncate text-xs font-semibold sm:max-w-40 sm:text-sm">
+                                    {sessao.tipo === 'administrador' ? 'Administrador' : sessao.pessoa.nome.trim().split(/\s+/)[0]}
                                 </span>
                             </Link>
                             <button
@@ -126,14 +122,11 @@ export default function Header() {
                     ))}
                     {sessao ? (
                         <>
-                            <p className="px-4 py-3 text-sm text-verde-escuro">
-                                <strong>{sessao.pessoa.nome}</strong> · {perfil}
-                            </p>
                             <Link
                                 to={sessao.tipo === 'administrador' ? '/admin' : '/app'}
                                 className="botao bg-verde text-creme"
                             >
-                                {sessao.tipo === 'administrador' ? 'Painel ADM' : 'Meu painel'} <Icone nome="grafico" className="h-4 w-4" />
+                                {sessao.tipo === 'administrador' ? 'Administrador' : sessao.pessoa.nome.trim().split(/\s+/)[0]}
                             </Link>
                             <Link to="/app/conta" className="botao botao-contorno">
                                 <Icone nome="conta" className="h-4 w-4" />

@@ -7,13 +7,15 @@ import AvisoEstado from '../../components/AvisoEstado/AvisoEstado';
 import ComoFunciona from '../../components/ComoFunciona/ComoFunciona';
 import SecaoODS from '../../components/SessaoODS/SessaoODS';
 import useConsulta from '../../hooks/useConsulta';
+import useAgora from '../../hooks/useAgora';
 import { buscarLotes } from '../../services/api';
 import { formatarNumero, statusDoLote } from '../../services/regras';
 import { imagens } from '../../data/imagem';
 
 export default function Home() {
     const consulta = useConsulta(buscarLotes);
-    const disponiveis = consulta.dados?.filter((lote) => statusDoLote(lote) === 'DISPONIVEL') || [];
+    const agora = useAgora();
+    const disponiveis = consulta.dados?.filter((lote) => statusDoLote(lote, agora) === 'DISPONIVEL') || [];
     const destaques = disponiveis.slice(0, 3);
     const quilos = disponiveis
         .filter((lote) => lote.unidade === 'kg')
@@ -121,29 +123,42 @@ export default function Home() {
             <SecaoODS />
             <section className="secao">
                 <div className="container-page">
-                    <div className="grid items-center gap-8 border-y border-linha py-12 md:grid-cols-[1.2fr_1fr]">
+                    <div className="grid items-start gap-8 border-y border-linha py-12 lg:grid-cols-[1fr_1.2fr]">
                         <div>
                             <p className="sobretitulo">Faça parte</p>
                             <h2 className="titulo-secao mt-3">
                                 Essa mesa <span className="destaque-laranja">também é sua.</span>
                             </h2>
                             <p className="mt-4 max-w-lg text-sm leading-7 text-tinta/65">
-                                Tem alimento sobrando ou uma comunidade pra alimentar? A próxima conexão pode
-                                começar com você.
+                                Aqui, quem oferece alimentos se conecta com quem cuida de uma comunidade.
+                                Escolha o perfil para entender como participar.
                             </p>
                         </div>
-                        <div className="flex flex-wrap gap-3 md:justify-end">
-                            <Link to="/cadastro?tipo=ofertante" className="botao bg-verde text-creme">
-                                <Icone nome="caixa" className="h-4 w-4" />
-                                Sou ofertante
-                            </Link>
-                            <Link
-                                to="/cadastro?tipo=organizacao"
-                                className="botao bg-amarelo text-verde-escuro"
-                            >
-                                <Icone nome="pessoas" className="h-4 w-4" />
-                                Sou organização
-                            </Link>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <details className="painel !p-5">
+                                <summary className="cursor-pointer text-sm font-semibold text-verde-escuro">Sou ofertante</summary>
+                                <p className="mt-4 text-sm leading-7 text-tinta/70">
+                                    Feirantes, mercados e produtores que têm alimentos excedentes.
+                                    Você publica lotes, combina a retirada e confirma a entrega.
+                                </p>
+                                <Link to="/cadastro?tipo=ofertante" className="botao mt-4 w-full bg-verde text-creme">
+                                    Cadastrar como ofertante
+                                </Link>
+                            </details>
+                            <details className="painel !p-5">
+                                <summary className="cursor-pointer text-sm font-semibold text-verde-escuro">Sou organização</summary>
+                                <p className="mt-4 text-sm leading-7 text-tinta/70">
+                                    ONGs, instituições sociais e cozinhas comunitárias que atendem outras pessoas.
+                                    Sua organização reserva os alimentos e combina a retirada com o ofertante.
+                                </p>
+                                <Link to="/cadastro?tipo=organizacao" className="botao mt-4 w-full bg-amarelo text-verde-escuro">
+                                    Cadastrar organização
+                                </Link>
+                            </details>
+                            <p className="text-xs leading-6 text-tinta/65 sm:col-span-2">
+                                As reservas são destinadas a organizações cadastradas. Pessoas físicas não
+                                reservam alimentos para consumo próprio pela plataforma.
+                            </p>
                         </div>
                     </div>
                 </div>

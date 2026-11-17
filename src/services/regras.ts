@@ -1,12 +1,22 @@
 import type { Lote, Reserva, StatusLote } from '../types/index.ts';
 
 
+function instanteDaData(data: string): number {
+    // O Java envia LocalDateTime no horário de São Paulo, sem indicar o fuso.
+    const local = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(data);
+    return new Date(local ? `${data}-03:00` : data).getTime();
+}
+
 export function statusDoLote(lote: Lote, agora = Date.now()): StatusLote {
     if (lote.status === 'INATIVO' || lote.ativo === false) return 'INATIVO';
     if (lote.status === 'RETIRADO') return 'RETIRADO';
-    if (new Date(lote.prazoRetirada).getTime() <= agora || lote.status === 'VENCIDO') return 'VENCIDO';
+    if (instanteDaData(lote.prazoRetirada) <= agora || lote.status === 'VENCIDO') return 'VENCIDO';
     if (lote.saldo <= 0) return 'RESERVADO';
     return lote.status;
+}
+
+export function prazoDivergente(lote: Lote, agora = Date.now()): boolean {
+    return lote.ativo && lote.status === 'VENCIDO' && instanteDaData(lote.prazoRetirada) > agora;
 }
 
 
@@ -28,13 +38,15 @@ export function quilosRetirados(reservas: Reserva[]): number {
 }
 
 export function formatarData(data: string): string {
-    const valor = new Date(data);
+    const valor = new Date(instanteDaData(data));
     if (!Number.isFinite(valor.getTime())) return 'Data não informada';
     return new Intl.DateTimeFormat('pt-BR', {
         day: '2-digit',
         month: '2-digit',
+        year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
+        timeZone: 'America/Sao_Paulo',
     }).format(valor);
 }
 
@@ -43,9 +55,35 @@ export function formatarNumero(numero: number): string {
 }
 
 export function dataParaCampo(data: string): string {
-    const valor = new Date(data);
+    const valor = new Date(instanteDaData(data));
     if (!Number.isFinite(valor.getTime())) return '';
-    return new Date(valor.getTime() - valor.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    const partes = new Intl.DateTimeFormat('sv-SE', {
+        timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    }).formatToParts(valor);
+    const parte = (tipo: string) => partes.find((item) => item.type === tipo)?.value;
+    return `${parte('year')}-${parte('month')}-${parte('day')}T${parte('hour')}:${parte('minute')}`;
+}
+
+export function formatarQuantidade(quantidade: number, unidade: string): string {
+    const nomes: Record<string, [string, string]> = {
+        kg: ['kg', 'kg'], l: ['l', 'l'], un: ['unidade', 'unidades'],
+        cx: ['caixa', 'caixas'], pct: ['pacote', 'pacotes'],
+    };
+    return `${formatarNumero(quantidade)} ${nomes[unidade]?.[quantidade === 1 ? 0 : 1] || unidade}`;
+}
+
+export function resumirQuantidades(reservas: Reserva[]) {
+    const totais = new Map<string, { unidade: string; reservada: number; retirada: number }>();
+    for (const reserva of reservas) {
+        if (reserva.status === 'CANCELADA') continue;
+        const unidade = reserva.lote.unidade;
+        const total = totais.get(unidade) || { unidade, reservada: 0, retirada: 0 };
+        if (reserva.status === 'ATIVA') total.reservada += reserva.quantidade;
+        if (reserva.status === 'RETIRADA') total.retirada += reserva.quantidadeRetirada;
+        totais.set(unidade, total);
+    }
+    return [...totais.values()].sort((a, b) => a.unidade.localeCompare(b.unidade));
 }
 
 export function validarNovaSenha(senhaAtual: string, novaSenha: string, confirmacao: string): string {
@@ -71,6 +109,6 @@ export function validarLinkImagem(valor: string): string {
 }
 
 export function prazoNoFuturo(prazo: string, agora = Date.now()): boolean {
-    const data = new Date(prazo).getTime();
+    const data = instanteDaData(prazo);
     return Number.isFinite(data) && data > agora;
 }
