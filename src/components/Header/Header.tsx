@@ -108,7 +108,8 @@ export default function Header() {
                 <nav
                     id="menu-celular"
                     aria-label="Navegação no celular"
-                    className="menu-entrada container-page grid gap-1 border-t border-linha py-4 lg:hidden"
+                    className="menu-entrada container-page grid max-h-[calc(100dvh-5rem)]
+                    gap-1 overflow-y-auto overscroll-contain border-t border-linha py-4 lg:hidden"
                 >
                     {links.map((link) => (
                         <NavLink
