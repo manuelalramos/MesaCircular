@@ -6,7 +6,7 @@ import useAcao from '../../hooks/useAcao';
 import useSessao from '../../hooks/useSessao';
 import { buscarLote, buscarMinhasReservas, reservarLote } from '../../services/api';
 import { ErroApi } from '../../services/erro';
-import { formatarData, formatarNumero, formatarQuantidade, prazoDivergente, statusDoLote, validarReserva } from '../../services/regras';
+import { formatarData, formatarNumero, formatarQuantidade, statusDoLote, validarReserva } from '../../services/regras';
 import useAgora from '../../hooks/useAgora';
 import AvisoEstado from '../../components/AvisoEstado/AvisoEstado';
 import TagStatus from '../../components/TagStatus/TagStatus';
@@ -157,12 +157,6 @@ export default function LoteDetalhe() {
                             </div>
                             <div>
                                 <TagStatus status={statusDoLote(lote, agora)} />
-                                {prazoDivergente(lote, agora) && (
-                                    <p className="mt-4 rounded-xl bg-rosa/20 p-4 text-sm leading-7 text-vinho">
-                                        O prazo de retirada está no futuro, mas o lote consta como vencido no cadastro.
-                                        As reservas ficam bloqueadas até a revisão da administração.
-                                    </p>
-                                )}
                                 <p className="sobretitulo mt-5">{lote.categoria.nome}</p>
                                 <h1 className="mt-3 text-3xl font-bold leading-tight tracking-[-1px] text-verde-escuro md:text-4xl">
                                     {lote.descricao}

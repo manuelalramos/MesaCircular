@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import type { DadosLote, Lote } from '../../types';
 import { buscarBairros, buscarCategorias, editarLote, publicarLote } from '../../services/api';
-import { dataParaCampo, formatarQuantidade, prazoDivergente, statusDoLote, validarLinkImagem, validarPrazoRetirada } from '../../services/regras';
+import { dataParaCampo, formatarQuantidade, statusDoLote, validarLinkImagem, validarPrazoRetirada } from '../../services/regras';
 import useAgora from '../../hooks/useAgora';
 import useConsulta from '../../hooks/useConsulta';
 import useSessao from '../../hooks/useSessao';
@@ -136,15 +136,8 @@ export default function FormularioLote({ lote, aoSalvar, aoCancelar }: Formulari
                             <option value="N">Inativo</option>
                         </select>
                         <p id="ajuda-ativo-lote" className="mt-2 text-xs leading-6 text-tinta/65">
-                            Inativar impede novas reservas sem excluir o lote. Ativar mantém a situação
-                            das reservas e o prazo: não desfaz retiradas nem reabre um lote marcado como vencido.
+                            Inativar impede novas reservas sem excluir o lote ou seu histórico.
                         </p>
-                        {prazoDivergente(previa, agora) && (
-                            <p className="mt-3 text-xs leading-6 text-vinho">
-                                O prazo está no futuro, mas o cadastro continua marcado como vencido.
-                                Alterar somente a data ou ativar a publicação não corrige essa situação.
-                            </p>
-                        )}
                     </div>
                 )}
                 <CampoFormulario
