@@ -399,7 +399,7 @@ dialog[open] {
         transform: none;
     }
     .carregando-icone {
-        animation-duration: 1.2s;
+        animation: none;
     }
 }
 
