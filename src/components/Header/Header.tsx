@@ -71,7 +71,7 @@ export default function Header() {
                                 <span className={`flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold text-creme ${sessao.tipo === 'administrador' ? 'bg-vinho' : 'bg-verde'}`}>
                                     {sessao.tipo === 'administrador' ? <Icone nome="escudo" className="h-4 w-4" /> : iniciais}
                                 </span>
-                                <span className="max-w-28 truncate text-xs font-semibold sm:max-w-40 sm:text-sm">
+                                <span className="hidden max-w-40 truncate text-sm font-semibold sm:block">
                                     {sessao.tipo === 'administrador' ? 'Administrador' : sessao.pessoa.nome.trim().split(/\s+/)[0]}
                                 </span>
                             </Link>

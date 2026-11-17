@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { Lote } from '../../../types';
+import type { Lote, StatusLote } from '../../../types';
 import { buscarLotes, excluirLote } from '../../../services/api';
 import { statusDoLote, formatarData, formatarQuantidade, prazoDivergente } from '../../../services/regras';
 import useAgora from '../../../hooks/useAgora';
@@ -20,6 +20,7 @@ export default function LotesAdmin() {
     const [editar, setEditar] = useState<Lote | null>(null);
     const [excluir, setExcluir] = useState<Lote | null>(null);
     const [busca, setBusca] = useState('');
+    const [status, setStatus] = useState<StatusLote | ''>('');
     function remover() {
         if (!excluir) return;
         void acao.executar(async () => {
@@ -30,7 +31,8 @@ export default function LotesAdmin() {
     }
     const filtrados =
         consulta.dados?.filter((lote) =>
-            `${lote.descricao} ${lote.ofertante.nome}`.toLowerCase().includes(busca.toLowerCase()),
+            (!status || statusDoLote(lote, agora) === status) &&
+            `${lote.descricao} ${lote.ofertante.nome}`.toLowerCase().includes(busca.trim().toLowerCase()),
         ) || [];
     return (
         <>
@@ -53,17 +55,50 @@ export default function LotesAdmin() {
                 </div>
             ) : (
                 <>
-                    <label htmlFor="busca-admin" className="mb-2 block text-xs font-semibold">
-                        Buscar por alimento ou ofertante
-                    </label>
-                    <input
-                        id="busca-admin"
-                        className="campo mb-6 max-w-lg"
-                        type="search"
-                        value={busca}
-                        onChange={(e) => setBusca(e.target.value)}
-                        placeholder="Encontre um lote"
-                    />
+                    <div className="mb-5 grid gap-4 sm:grid-cols-[2fr_1fr]" role="search" aria-label="Filtros dos lotes da administração">
+                        <div>
+                            <label htmlFor="busca-admin" className="mb-2 block text-xs font-semibold">
+                                Buscar por alimento ou ofertante
+                            </label>
+                            <input
+                                id="busca-admin"
+                                className="campo"
+                                type="search"
+                                value={busca}
+                                onChange={(e) => setBusca(e.target.value)}
+                                placeholder="Encontre um lote"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="status-admin" className="mb-2 block text-xs font-semibold">Status do lote</label>
+                            <select
+                                id="status-admin"
+                                className="campo"
+                                value={status}
+                                onChange={(e) => setStatus(e.target.value as StatusLote | '')}
+                            >
+                                <option value="">Todos os status</option>
+                                <option value="DISPONIVEL">Disponível</option>
+                                <option value="RESERVADO">Reservado</option>
+                                <option value="RETIRADO">Retirado</option>
+                                <option value="VENCIDO">Vencido</option>
+                                <option value="INATIVO">Inativo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="mb-6 flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <p role="status" className="text-tinta/65">
+                            {!consulta.carregando && !consulta.erro && `${filtrados.length} ${filtrados.length === 1 ? 'lote encontrado' : 'lotes encontrados'}`}
+                        </p>
+                        <div className="flex flex-wrap gap-4">
+                            <button className="font-semibold text-verde underline underline-offset-4" onClick={() => { setBusca(''); setStatus(''); }}>
+                                Limpar filtros
+                            </button>
+                            <button className="font-semibold text-verde underline underline-offset-4" disabled={consulta.carregando} onClick={consulta.recarregar}>
+                                Atualizar lotes
+                            </button>
+                        </div>
+                    </div>
                     {consulta.carregando ? (
                         <AvisoEstado tipo="carregando" />
                     ) : consulta.erro ? (

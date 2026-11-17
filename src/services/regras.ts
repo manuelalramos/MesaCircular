@@ -112,3 +112,14 @@ export function prazoNoFuturo(prazo: string, agora = Date.now()): boolean {
     const data = instanteDaData(prazo);
     return Number.isFinite(data) && data > agora;
 }
+
+export function validarPrazoRetirada(prazo: string, lote?: Lote, administrador = false, agora = Date.now()): string {
+    const instante = instanteDaData(prazo);
+    if (!Number.isFinite(instante)) return 'Informe uma data e um horário válidos.';
+    if (lote && instante <= instanteDaData(lote.criadoEm))
+        return 'O prazo de retirada precisa ser posterior à publicação do lote.';
+    const mudouPrazo = lote && prazo !== dataParaCampo(lote.prazoRetirada);
+    if ((!lote || (!administrador && mudouPrazo)) && !prazoNoFuturo(prazo, agora))
+        return 'Escolha um prazo no futuro.';
+    return '';
+}
