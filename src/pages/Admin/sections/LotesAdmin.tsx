@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Lote, StatusLote } from '../../../types';
 import { buscarLotes, excluirLote } from '../../../services/api';
-import { statusDoLote, formatarData, formatarQuantidade, prazoDivergente } from '../../../services/regras';
+import { statusDoLote, formatarData, formatarQuantidade } from '../../../services/regras';
 import useAgora from '../../../hooks/useAgora';
 import useConsulta from '../../../hooks/useConsulta';
 import useAcao from '../../../hooks/useAcao';
@@ -130,7 +130,6 @@ export default function LotesAdmin() {
                                             Saldo: {formatarQuantidade(lote.saldo, lote.unidade)} · Total: {formatarQuantidade(lote.quantidade, lote.unidade)}
                                         </p>
                                         <p className="mt-1 text-xs text-tinta/65">Retirada até {formatarData(lote.prazoRetirada)}</p>
-                                        {prazoDivergente(lote, agora) && <p className="mt-2 text-xs text-vinho">Prazo futuro, mas marcado como vencido no cadastro. Necessita revisão.</p>}
                                     </div>
                                     <div className="flex flex-wrap items-center gap-3">
                                         <TagStatus status={statusDoLote(lote, agora)} />

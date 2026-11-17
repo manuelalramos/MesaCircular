@@ -4,7 +4,7 @@ import type { Lote, Reserva } from '../../types';
 import useSessao from '../../hooks/useSessao';
 import useConsulta from '../../hooks/useConsulta';
 import { buscarMeusLotes, buscarMinhasReservas, buscarReservasLote } from '../../services/api';
-import { formatarNumero, quilosRetirados, statusDoLote } from '../../services/regras';
+import { formatarNumero, formatarQuantidade, resumirQuantidades, statusDoLote } from '../../services/regras';
 import useAgora from '../../hooks/useAgora';
 import CardImpacto from '../../components/CardImpacto/CardImpacto';
 import AvisoEstado from '../../components/AvisoEstado/AvisoEstado';
@@ -16,6 +16,10 @@ interface Resumo {
     lotes: Lote[];
     reservas: Reserva[];
 }
+
+const unidadesRetiradas: Record<string, string> = {
+    kg: 'Quilos (kg)', l: 'Litros (l)', un: 'Unidades', cx: 'Caixas', pct: 'Pacotes',
+};
 
 export default function Dashboard() {
     const agora = useAgora();
@@ -37,6 +41,7 @@ export default function Dashboard() {
     if (sessao?.tipo === 'administrador') return <Navigate to="/admin" replace />;
     const ofertante = sessao?.tipo === 'ofertante';
     const resumo = consulta.dados;
+    const retiradas = resumirQuantidades(resumo?.reservas || []).filter((total) => total.retirada > 0);
     return (
         <section>
             <p className="sobretitulo">Toda conexão conta</p>
@@ -60,7 +65,7 @@ export default function Dashboard() {
             ) : (
                 resumo && (
                     <>
-                        <div className={`grid gap-4 ${ofertante ? 'lg:grid-cols-3' : 'sm:grid-cols-2'}`}>
+                        <div className={`grid gap-4 ${ofertante ? 'lg:grid-cols-3' : 'items-start sm:grid-cols-2'}`}>
                             {ofertante ? (
                                 <>
                                     <div className="painel">
@@ -103,11 +108,28 @@ export default function Dashboard() {
                                         />
                                     </div>
                                     <div className="painel">
-                                        <CardImpacto
-                                            numero={`${formatarNumero(quilosRetirados(resumo.reservas))} kg`}
-                                            rotulo="que retirei e aproveitei"
-                                            icone="folha"
-                                        />
+                                        <h2 className="text-lg font-semibold text-verde-escuro">Alimentos retirados</h2>
+                                        <p className="mt-2 text-xs leading-6 text-tinta/65">
+                                            Somente retiradas confirmadas, separadas por unidade.
+                                        </p>
+                                        {retiradas.length ? (
+                                            <dl className="mt-5 grid grid-cols-2 gap-3">
+                                                {retiradas.map((total) => (
+                                                    <div key={total.unidade} className="min-w-0 rounded-2xl bg-verde/5 p-4">
+                                                        <dt className="text-xs font-medium text-tinta/65">
+                                                            {unidadesRetiradas[total.unidade] || total.unidade}
+                                                        </dt>
+                                                        <dd className="mt-2 break-words text-2xl font-bold text-verde-escuro">
+                                                            {formatarNumero(total.retirada)}
+                                                        </dd>
+                                                    </div>
+                                                ))}
+                                            </dl>
+                                        ) : (
+                                            <p className="mt-5 text-sm leading-7 text-tinta/65">
+                                                Você ainda não tem retiradas confirmadas. As quantidades aparecem aqui depois da confirmação da entrega.
+                                            </p>
+                                        )}
                                     </div>
                                 </>
                             )}
@@ -146,7 +168,8 @@ export default function Dashboard() {
                                                 {reserva.lote.descricao}
                                             </Link>
                                             <p className="mt-1 text-xs text-tinta/65">
-                                                {formatarNumero(reserva.quantidade)} {reserva.lote.unidade} ·{' '}
+                                                {reserva.status === 'RETIRADA' ? 'Retirado: ' : reserva.status === 'CANCELADA' ? 'Cancelado: ' : 'Reservado: '}
+                                                {formatarQuantidade(reserva.status === 'RETIRADA' ? reserva.quantidadeRetirada : reserva.quantidade, reserva.lote.unidade)} ·{' '}
                                                 {reserva.lote.bairro}
                                             </p>
                                         </div>

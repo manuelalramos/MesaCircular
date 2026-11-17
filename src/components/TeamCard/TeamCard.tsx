@@ -19,7 +19,14 @@ export default function TeamCard({ integrante }: { integrante: Integrante }) {
             </p>
             <div className="mt-5 flex flex-wrap gap-5 border-t border-linha pt-5 text-sm font-medium text-verde">
                 {integrante.github ? (
-                    <a className="link-seta" href={integrante.github} target="_blank" rel="noreferrer">
+                    <a
+                        className="link-seta"
+                        href={integrante.github}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`GitHub de ${integrante.nome} (abre em nova aba)`}
+                    >
+
                         <Icone nome="github" className="h-5 w-5" />
                         GitHub
                     </a>
@@ -30,7 +37,13 @@ export default function TeamCard({ integrante }: { integrante: Integrante }) {
                     </span>
                 )}
                 {integrante.linkedin ? (
-                    <a className="link-seta" href={integrante.linkedin} target="_blank" rel="noreferrer">
+                    <a
+                        className="link-seta"
+                        href={integrante.linkedin}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`LinkedIn de ${integrante.nome} (abre em nova aba)`}
+                    >
                         <Icone nome="linkedin" className="h-5 w-5" />
                         LinkedIn
                     </a>
