@@ -4,15 +4,17 @@ import CardLote from '../../components/CardLote/CardLote';
 import AvisoEstado from '../../components/AvisoEstado/AvisoEstado';
 import Icone from '../../components/Icone/Icone';
 import useConsulta from '../../hooks/useConsulta';
-import { buscarLotes } from '../../services/api';
+import useAgora from '../../hooks/useAgora';
+import { buscarBairros, buscarLotes } from '../../services/api';
 import { statusDoLote } from '../../services/regras';
 
 export default function Lotes() {
     const { dados, carregando, erro, recarregar } = useConsulta(buscarLotes);
+    const bairros = useConsulta(buscarBairros);
+    const agora = useAgora();
     const [busca, setBusca] = useState('');
     const [bairro, setBairro] = useState('');
     const [status, setStatus] = useState('DISPONIVEL');
-    const bairros = [...new Set(dados?.map((lote) => lote.bairro) || [])].sort();
     const limparTexto = (texto: string) =>
         texto
             .normalize('NFD')
@@ -21,8 +23,8 @@ export default function Lotes() {
     const filtrados =
         dados?.filter(
             (lote) =>
-                (!bairro || lote.bairro === bairro) &&
-                (!status || statusDoLote(lote) === status) &&
+                (!bairro || lote.idBairro === Number(bairro)) &&
+                (!status || statusDoLote(lote, agora) === status) &&
                 limparTexto(`${lote.descricao} ${lote.categoria.nome} ${lote.ofertante.nome}`).includes(
                     limparTexto(busca.trim()),
                 ),
@@ -31,7 +33,7 @@ export default function Lotes() {
         <>
             <PageIntro
                 titulo="Lotes disponíveis"
-                descricao="Coisa boa merece circular. Encontre alimentos na sua comunidade, confira os detalhes e dê a eles um novo destino."
+                descricao="Coisa boa merece circular. Encontre alimentos na sua comunidade, confira os detalhes e dê a eles um novo destino. No momento, atendemos apenas a Região Metropolitana de São Paulo."
                 etiqueta="Lotes disponíveis"
             />
             <section className="container-page secao !pt-8">
@@ -70,10 +72,11 @@ export default function Lotes() {
                             className="campo"
                             value={bairro}
                             onChange={(e) => setBairro(e.target.value)}
+                            disabled={bairros.carregando || !!bairros.erro}
                         >
-                            <option value="">Todos os bairros</option>
-                            {bairros.map((nome) => (
-                                <option key={nome}>{nome}</option>
+                            <option value="">{bairros.carregando ? 'Carregando bairros…' : 'Todos os bairros'}</option>
+                            {bairros.dados?.map((item) => (
+                                <option key={item.id} value={item.id}>{item.nome} · {item.cidade}/{item.uf}</option>
                             ))}
                         </select>
                     </div>
@@ -92,9 +95,15 @@ export default function Lotes() {
                             <option value="RESERVADO">Reservado</option>
                             <option value="RETIRADO">Retirado</option>
                             <option value="VENCIDO">Vencido</option>
+                            <option value="INATIVO">Inativo</option>
                         </select>
                     </div>
                 </form>
+                {bairros.erro && (
+                    <div className="mb-5">
+                        <AvisoEstado tipo="erro" mensagem="Não conseguimos carregar a lista de bairros." tentarNovamente={bairros.recarregar} compacto />
+                    </div>
+                )}
                 {carregando ? (
                     <AvisoEstado tipo="carregando" />
                 ) : erro ? (
@@ -106,6 +115,12 @@ export default function Lotes() {
                                 {filtrados.length}{' '}
                                 {filtrados.length === 1 ? 'lote encontrado' : 'lotes encontrados'}
                             </p>
+                            <button
+                                className="text-xs font-semibold text-verde underline underline-offset-4"
+                                onClick={() => { recarregar(); bairros.recarregar(); }}
+                            >
+                                Atualizar lotes e bairros
+                            </button>
                             <button
                                 className="text-xs font-semibold text-verde underline underline-offset-4"
                                 onClick={() => {

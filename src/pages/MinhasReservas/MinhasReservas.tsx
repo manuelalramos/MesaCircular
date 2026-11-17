@@ -10,9 +10,11 @@ import AvisoEstado from '../../components/AvisoEstado/AvisoEstado';
 import TagStatus from '../../components/TagStatus/TagStatus';
 import Feedback from '../../components/Feedback/Feedback';
 import Confirmacao from '../../components/Confirmacao/Confirmacao';
+import useAgora from '../../hooks/useAgora';
 import Icone from '../../components/Icone/Icone';
 
 export default function MinhasReservas() {
+    const agora = useAgora();
     const { sessao } = useSessao();
     const buscar = useCallback(() => buscarMinhasReservas(sessao!.pessoa.id), [sessao]);
     const consulta = useConsulta(buscar);
@@ -109,7 +111,7 @@ export default function MinhasReservas() {
                             {reserva.status === 'ATIVA' && (
                                 <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
                                     <p className="max-w-xl text-xs leading-6 text-tinta/60">
-                                        {statusDoLote(reserva.lote) === 'VENCIDO'
+                                        {statusDoLote(reserva.lote, agora) === 'VENCIDO'
                                             ? 'O prazo deste lote passou. Fale com o ofertante para resolver a reserva ou cancele.'
                                             : 'Combine a retirada pelo contato acima. O ofertante confirma a entrega pelo painel dele.'}
                                     </p>

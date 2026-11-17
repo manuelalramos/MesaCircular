@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Lote } from '../../../types';
 import { buscarLotes, excluirLote } from '../../../services/api';
-import { statusDoLote, formatarNumero } from '../../../services/regras';
+import { statusDoLote, formatarData, formatarQuantidade, prazoDivergente } from '../../../services/regras';
+import useAgora from '../../../hooks/useAgora';
 import useConsulta from '../../../hooks/useConsulta';
 import useAcao from '../../../hooks/useAcao';
 import AvisoEstado from '../../../components/AvisoEstado/AvisoEstado';
@@ -13,6 +14,7 @@ import Feedback from '../../../components/Feedback/Feedback';
 import Icone from '../../../components/Icone/Icone';
 
 export default function LotesAdmin() {
+    const agora = useAgora();
     const consulta = useConsulta(buscarLotes);
     const acao = useAcao();
     const [editar, setEditar] = useState<Lote | null>(null);
@@ -87,12 +89,16 @@ export default function LotesAdmin() {
                                             {lote.descricao}
                                         </Link>
                                         <p className="mt-2 text-xs leading-6 text-tinta/65">
-                                            #{lote.id} · {lote.ofertante.nome} · {formatarNumero(lote.saldo)}{' '}
-                                            {lote.unidade} · {lote.bairro}
+                                            #{lote.id} · {lote.ofertante.nome} · {lote.bairro}
                                         </p>
+                                        <p className="mt-1 text-xs leading-6 text-tinta/65">
+                                            Saldo: {formatarQuantidade(lote.saldo, lote.unidade)} · Total: {formatarQuantidade(lote.quantidade, lote.unidade)}
+                                        </p>
+                                        <p className="mt-1 text-xs text-tinta/65">Retirada até {formatarData(lote.prazoRetirada)}</p>
+                                        {prazoDivergente(lote, agora) && <p className="mt-2 text-xs text-vinho">Prazo futuro, mas marcado como vencido no cadastro. Necessita revisão.</p>}
                                     </div>
                                     <div className="flex flex-wrap items-center gap-3">
-                                        <TagStatus status={statusDoLote(lote)} />
+                                        <TagStatus status={statusDoLote(lote, agora)} />
                                         <button
                                             className="rounded-full p-2.5 text-verde hover:bg-verde/10"
                                             aria-label={`Editar ${lote.descricao}`}

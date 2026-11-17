@@ -1,12 +1,14 @@
 import { Link } from 'react-router-dom';
 import type { Lote } from '../../types';
-import { formatarData, formatarNumero, statusDoLote } from '../../services/regras';
+import { formatarData, formatarQuantidade, prazoDivergente, statusDoLote } from '../../services/regras';
+import useAgora from '../../hooks/useAgora';
 import TagStatus from '../TagStatus/TagStatus';
 import Icone from '../Icone/Icone';
 import Imagem from '../Imagem/Imagem';
 import { imagemDoLote } from '../../data/imagem';
 
 export default function CardLote({ lote }: { lote: Lote }) {
+    const agora = useAgora();
     return (
         <article className="card-lote group flex min-w-0 flex-col overflow-hidden rounded-[24px] border border-linha bg-[#FFFDF8]">
             <div className="relative h-36 overflow-hidden sm:h-40">
@@ -17,10 +19,10 @@ export default function CardLote({ lote }: { lote: Lote }) {
                     loading="lazy"
                 />
                 <div className="absolute left-4 top-4">
-                    <TagStatus status={statusDoLote(lote)} />
+                    <TagStatus status={statusDoLote(lote, agora)} />
                 </div>
                 <span className="absolute bottom-3 right-3 rounded-full bg-creme/95 px-3 py-1.5 text-xs font-semibold text-verde-escuro">
-                    {formatarNumero(lote.saldo)} {lote.unidade}
+                    {formatarQuantidade(lote.saldo, lote.unidade)} de saldo
                 </span>
             </div>
             <div className="flex flex-1 flex-col p-5 sm:p-6">
@@ -29,6 +31,9 @@ export default function CardLote({ lote }: { lote: Lote }) {
                 </p>
                 <h3 className="text-lg font-semibold leading-7 text-verde-escuro">{lote.descricao}</h3>
                 <p className="mt-1 text-xs text-tinta/60">por {lote.ofertante.nome}</p>
+                {prazoDivergente(lote, agora) && (
+                    <p className="mt-3 text-xs leading-5 text-vinho">Prazo e situação do lote aguardam revisão da administração.</p>
+                )}
                 <div className="mb-5 mt-5 grid gap-2 text-xs text-tinta/70">
                     <p className="flex items-center gap-2">
                         <Icone nome="pin" className="h-4 w-4 text-verde" />

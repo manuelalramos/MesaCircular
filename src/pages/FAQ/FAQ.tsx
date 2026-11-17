@@ -5,6 +5,16 @@ import Icone from '../../components/Icone/Icone';
 
 const perguntas = [
     {
+        pergunta: 'Qual é a diferença entre ofertante e organização?',
+        resposta:
+            'Ofertantes são feirantes, mercados e produtores que publicam alimentos excedentes e confirmam as entregas. Organizações são ONGs, instituições sociais e cozinhas comunitárias que reservam esses alimentos para atender uma comunidade e combinam a retirada.',
+    },
+    {
+        pergunta: 'Posso reservar alimentos como pessoa física?',
+        resposta:
+            'As reservas são destinadas a organizações cadastradas, como ONGs e instituições sociais. O Mesa Circular não oferece reservas para consumo próprio de pessoas físicas. Se você representa uma organização, cadastre a instituição e informe a pessoa responsável.',
+    },
+    {
         pergunta: 'O que é o Mesa Circular?',
         resposta:
             'Uma ponte entre quem tem alimentos excedentes e organizações que precisam deles. Feirantes, mercados e produtores publicam os lotes; organizações reservam e combinam a retirada.',

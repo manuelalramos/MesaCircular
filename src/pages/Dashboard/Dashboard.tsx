@@ -5,6 +5,7 @@ import useSessao from '../../hooks/useSessao';
 import useConsulta from '../../hooks/useConsulta';
 import { buscarMeusLotes, buscarMinhasReservas, buscarReservasLote } from '../../services/api';
 import { formatarNumero, quilosRetirados, statusDoLote } from '../../services/regras';
+import useAgora from '../../hooks/useAgora';
 import CardImpacto from '../../components/CardImpacto/CardImpacto';
 import AvisoEstado from '../../components/AvisoEstado/AvisoEstado';
 import TagStatus from '../../components/TagStatus/TagStatus';
@@ -17,6 +18,7 @@ interface Resumo {
 }
 
 export default function Dashboard() {
+    const agora = useAgora();
 
     
     const { sessao } = useSessao();
@@ -65,7 +67,7 @@ export default function Dashboard() {
                                         <CardImpacto
                                             numero={
                                                 resumo.lotes.filter((l) =>
-                                                    ['DISPONIVEL', 'RESERVADO'].includes(statusDoLote(l)),
+                                                    ['DISPONIVEL', 'RESERVADO'].includes(statusDoLote(l, agora)),
                                                 ).length
                                             }
                                             rotulo="meus lotes ativos"

@@ -6,7 +6,8 @@ import useAcao from '../../hooks/useAcao';
 import useSessao from '../../hooks/useSessao';
 import { buscarLote, buscarMinhasReservas, reservarLote } from '../../services/api';
 import { ErroApi } from '../../services/erro';
-import { formatarData, formatarNumero, statusDoLote, validarReserva } from '../../services/regras';
+import { formatarData, formatarNumero, formatarQuantidade, prazoDivergente, statusDoLote, validarReserva } from '../../services/regras';
+import useAgora from '../../hooks/useAgora';
 import AvisoEstado from '../../components/AvisoEstado/AvisoEstado';
 import TagStatus from '../../components/TagStatus/TagStatus';
 import CampoFormulario from '../../components/CampoFormulario/CampoFormulario';
@@ -88,6 +89,7 @@ function ReservarFormulario({
 }
 
 export default function LoteDetalhe() {
+    const agora = useAgora();
     const { id } = useParams();
     const { sessao } = useSessao();
     const [sucesso, setSucesso] = useState('');
@@ -98,7 +100,7 @@ export default function LoteDetalhe() {
     }, [id]);
     const consulta = useConsulta(buscar);
     const lote = consulta.dados;
-    const disponivel = lote && statusDoLote(lote) === 'DISPONIVEL' && lote.saldo > 0;
+    const disponivel = lote && statusDoLote(lote, agora) === 'DISPONIVEL' && lote.saldo > 0;
     return (
         <section className="container-page py-9 md:py-12">
             {!lote && consulta.statusErro !== 404 && <h1 className="sr-only">Detalhe do lote</h1>}
@@ -154,20 +156,33 @@ export default function LoteDetalhe() {
                                 </div>
                             </div>
                             <div>
-                                <TagStatus status={statusDoLote(lote)} />
+                                <TagStatus status={statusDoLote(lote, agora)} />
+                                {prazoDivergente(lote, agora) && (
+                                    <p className="mt-4 rounded-xl bg-rosa/20 p-4 text-sm leading-7 text-vinho">
+                                        O prazo de retirada está no futuro, mas o lote consta como vencido no cadastro.
+                                        As reservas ficam bloqueadas até a revisão da administração.
+                                    </p>
+                                )}
                                 <p className="sobretitulo mt-5">{lote.categoria.nome}</p>
                                 <h1 className="mt-3 text-3xl font-bold leading-tight tracking-[-1px] text-verde-escuro md:text-4xl">
                                     {lote.descricao}
                                 </h1>
-                                <div className="my-7 grid grid-cols-2 gap-4 rounded-2xl bg-[#E8EDDC] p-5">
+                                <div className="my-7 grid gap-5 rounded-2xl bg-[#E8EDDC] p-5 sm:grid-cols-2">
                                     <div>
-                                        <p className="text-xs text-tinta/65">Saldo disponível</p>
+                                        <p className="text-xs text-tinta/65">Saldo do lote</p>
                                         <p className="mt-2 text-xl font-bold text-verde-escuro">
-                                            {formatarNumero(lote.saldo)} {lote.unidade}
+                                            {formatarQuantidade(lote.saldo, lote.unidade)}
                                         </p>
-                                        <p className="mt-1 text-[10px] text-tinta/55">
-                                            de {formatarNumero(lote.quantidade)} {lote.unidade} publicados
+                                        <p className="mt-1 text-xs leading-6 text-tinta/65">
+                                            {disponivel ? 'Disponível para novas reservas.' : 'A situação atual não permite novas reservas.'}
                                         </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-tinta/65">Total publicado</p>
+                                        <p className="mt-2 text-xl font-bold text-verde-escuro">
+                                            {formatarQuantidade(lote.quantidade, lote.unidade)}
+                                        </p>
+                                        <p className="mt-1 text-xs leading-6 text-tinta/65">Quantidade total, incluindo o que já foi reservado ou retirado.</p>
                                     </div>
                                     <div>
                                         <p className="text-xs text-tinta/65">Retirada até</p>
@@ -207,7 +222,7 @@ export default function LoteDetalhe() {
                                 ) : sessao.tipo === 'organizacao' ? (
                                     <div className="rounded-2xl bg-rosa/20 p-5">
                                         <p className="text-sm leading-7 text-vinho">
-                                            Este lote está {statusDoLote(lote).toLowerCase()} e não recebe
+                                            Este lote está {statusDoLote(lote, agora).toLowerCase()} e não recebe
                                             novas reservas.
                                         </p>
                                         <Link
