@@ -11,7 +11,7 @@ const passos: { numero: string; titulo: string; texto: string; icone: NomeIcone;
     {
         numero: '02',
         titulo: 'Encontrou? Reserve.',
-        texto: 'A organização escolhe o lote e a quantidade que faz sentido para a sua comunidade.',
+        texto: 'ONGs e organizações sociais cadastradas reservam o lote para atender sua comunidade. A reserva não é destinada ao consumo individual.',
         icone: 'saco',
         cor: 'destaque-laranja',
     },

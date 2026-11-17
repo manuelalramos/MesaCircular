@@ -2,7 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import type { DadosLote, Lote } from '../../types';
 import { buscarBairros, buscarCategorias, editarLote, publicarLote } from '../../services/api';
-import { dataParaCampo, prazoNoFuturo, validarLinkImagem } from '../../services/regras';
+import { dataParaCampo, formatarQuantidade, prazoDivergente, prazoNoFuturo, statusDoLote, validarLinkImagem } from '../../services/regras';
+import useAgora from '../../hooks/useAgora';
 import useConsulta from '../../hooks/useConsulta';
 import useSessao from '../../hooks/useSessao';
 import useAcao from '../../hooks/useAcao';
@@ -11,6 +12,7 @@ import CampoFormulario from '../CampoFormulario/CampoFormulario';
 import Feedback from '../Feedback/Feedback';
 import Icone from '../Icone/Icone';
 import Imagem from '../Imagem/Imagem';
+import TagStatus from '../TagStatus/TagStatus';
 
 interface FormularioLoteProps {
     lote?: Lote;
@@ -24,7 +26,9 @@ export default function FormularioLote({ lote, aoSalvar, aoCancelar }: Formulari
     const acao = useAcao();
     const [erros, setErros] = useState<Record<string, string>>({});
     const [publicado, setPublicado] = useState<Lote | null>(null);
-    const [minimoPrazo] = useState(() => dataParaCampo(new Date().toISOString()));
+    const agora = useAgora();
+    const minimoPrazo = dataParaCampo(new Date(agora).toISOString());
+    const administrador = sessao?.tipo === 'administrador';
     const [imagem, setImagem] = useState(lote?.imagem || '');
     const linkImagem = imagem.trim();
 
@@ -42,7 +46,7 @@ export default function FormularioLote({ lote, aoSalvar, aoCancelar }: Formulari
             local: String(campos.get('local') || '').trim(),
             ofertanteId: lote?.ofertante.id || sessao!.pessoa.id,
             imagem: linkImagem,
-            ativo: lote?.ativo ?? true,
+            ativo: administrador && lote ? campos.get('ativo') === 'S' : lote?.ativo ?? true,
         };
         const falhas: Record<string, string> = {};
         if (dados.descricao.length < 5) falhas.descricao = 'Descreva o alimento em pelo menos 5 caracteres.';
@@ -55,7 +59,9 @@ export default function FormularioLote({ lote, aoSalvar, aoCancelar }: Formulari
         if (lote && lote.saldo < lote.quantidade && dados.unidade !== lote.unidade)
             falhas.unidade = 'A unidade não pode mudar depois de receber reservas.';
         if (!dados.categoriaId) falhas.categoria = 'Escolha uma categoria.';
-        if (!prazoNoFuturo(dados.prazoRetirada))
+        const mudouPrazo = lote && dados.prazoRetirada !== dataParaCampo(lote.prazoRetirada);
+        const reativando = lote && !lote.ativo && dados.ativo;
+        if ((!lote || mudouPrazo || reativando) && !prazoNoFuturo(dados.prazoRetirada))
             falhas.prazoRetirada = 'Escolha um prazo no futuro.';
         if (!bairros.dados?.some((bairro) => bairro.id === dados.idBairro)) falhas.idBairro = 'Selecione o bairro da retirada.';
         if (dados.local.length < 5) falhas.local = 'Informe o endereço e um ponto de referência.';
@@ -116,6 +122,29 @@ export default function FormularioLote({ lote, aoSalvar, aoCancelar }: Formulari
     return (
         <form onSubmit={enviar} noValidate className="painel">
             <fieldset disabled={acao.enviando} className="grid gap-5">
+                {lote && administrador && (
+                    <div className="rounded-2xl border border-linha p-4">
+                        <div className="mb-4 flex flex-wrap items-center gap-3">
+                            <span className="text-sm font-semibold">Situação atual</span>
+                            <TagStatus status={statusDoLote(lote, agora)} />
+                        </div>
+                        <label htmlFor="ativo-lote" className="mb-2 block text-sm font-semibold">Publicação do lote</label>
+                        <select id="ativo-lote" name="ativo" className="campo" defaultValue={lote.ativo ? 'S' : 'N'} aria-describedby="ajuda-ativo-lote">
+                            <option value="S">Ativo</option>
+                            <option value="N">Inativo</option>
+                        </select>
+                        <p id="ajuda-ativo-lote" className="mt-2 text-xs leading-6 text-tinta/65">
+                            Inativar impede novas reservas sem excluir o lote. Ativar mantém a situação
+                            das reservas e o prazo: não desfaz retiradas nem reabre um lote marcado como vencido.
+                        </p>
+                        {prazoDivergente(lote, agora) && (
+                            <p className="mt-3 text-xs leading-6 text-vinho">
+                                O prazo está no futuro, mas o cadastro continua marcado como vencido.
+                                Alterar somente a data ou ativar a publicação não corrige essa situação.
+                            </p>
+                        )}
+                    </div>
+                )}
                 <CampoFormulario
                     name="descricao"
                     label="O que você vai compartilhar?"
@@ -165,6 +194,9 @@ export default function FormularioLote({ lote, aoSalvar, aoCancelar }: Formulari
                         defaultValue={lote?.quantidade}
                         required
                         erro={erros.quantidade}
+                        ajuda={lote
+                            ? `Total originalmente publicado: ${formatarQuantidade(lote.quantidade, lote.unidade)}. Saldo atual: ${formatarQuantidade(lote.saldo, lote.unidade)}. O saldo é recalculado ao salvar, preservando reservas e retiradas.`
+                            : 'Informe o total na unidade escolhida. Ex.: 40 pacotes significa 40 embalagens, não 40 kg.'}
                     />
                     <div>
                         <label htmlFor="unidade" className="mb-2 block text-sm font-semibold">
@@ -222,7 +254,7 @@ export default function FormularioLote({ lote, aoSalvar, aoCancelar }: Formulari
                         name="prazoRetirada"
                         label="Retirar até quando?"
                         type="datetime-local"
-                        min={minimoPrazo}
+                        min={lote ? undefined : minimoPrazo}
                         defaultValue={lote ? dataParaCampo(lote.prazoRetirada) : ''}
                         required
                         erro={erros.prazoRetirada}

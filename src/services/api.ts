@@ -215,6 +215,11 @@ export const buscarReservasLote = (id: number) => lerReservas(`/lotes/${id}/rese
 
 export const buscarReservas = () => lerReservas('/reservas');
 
+export async function buscarResumoAdmin() {
+    const [estatisticas, reservas] = await Promise.all([buscarEstatisticas(), buscarReservas()]);
+    return { estatisticas, reservas };
+}
+
 export const buscarMinhasReservas = (id: number) => lerReservas(`/organizacoes/${id}/reservas`);
 
 export const reservarLote = (dados: DadosReserva) => requisicao<ReservaApi>('/reservas', 'POST', {

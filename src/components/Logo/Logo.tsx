@@ -12,7 +12,7 @@ export default function Logo({ claro = false }: { claro?: boolean }) {
                 alt="Mesa Circular"
                 width={900}
                 height={370}
-                className={claro ? 'h-auto w-44 max-w-full' : 'h-auto w-32 sm:w-36'}
+                className={claro ? 'h-auto w-32 max-w-full' : 'h-auto w-24 sm:w-28'}
             />
         </Link>
     );
