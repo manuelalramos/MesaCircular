@@ -191,7 +191,8 @@ export default function Cadastro() {
                                 defaultValue=""
                                 required
                                 aria-invalid={!!erros.idBairro}
-                                aria-describedby={erros.idBairro ? 'erro-bairro' : undefined}
+                                aria-describedby={    
+                                    erros.idBairro ? 'erro-bairro ajuda-bairro' : 'ajuda-bairro' }
                             >
                                 <option value="">Selecione seu bairro</option>
                                 {bairros.dados?.map((bairro) => (
@@ -200,7 +201,7 @@ export default function Cadastro() {
                                     </option>
                                 ))}
                             </select>
-                            {erros.idBairro && <p id="erro-bairro" className="mt-1.5 text-xs text-vinho">{erros.idBairro}</p>}
+                            <p id="ajuda-bairro" className="mt-1.5 text-xs leading-5 text-tinta/60">    No momento, atendemos apenas a Região Metropolitana de São Paulo.    Se seu bairro não aparecer,{' '}    <Link to="/contato" className="font-semibold text-verde underline">        fale com a equipe    </Link>{' '}    antes de concluir o cadastro. </p> {erros.idBairro && (    <p id="erro-bairro" className="mt-1.5 text-xs text-vinho">        {erros.idBairro}    </p> )}
                         </div>
                     </div>
                     {tipo === 'organizacao' && (
