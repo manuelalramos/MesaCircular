@@ -56,6 +56,13 @@ const perguntas = [
             'escolha seu bairro na lista disponível. Se ele não aparecer, fale com a equipe ' +
             'pela página de Contato antes de concluir o cadastro.',
     },
+    {
+        pergunta: 'Como adiciono ou altero a foto de um lote?',
+        resposta:
+            'Ao publicar ou editar um lote, cole um link público direto para a imagem no campo ' +
+            'Link da foto. Você pode conferir a prévia antes de salvar. O administrador também ' +
+            'pode alterar esse link. Sem link, usamos a foto padrão da categoria.',
+    },
 ];
 
 export default function Faq() {
