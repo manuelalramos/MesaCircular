@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { matchPath, Route, Routes, useLocation } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout/MainLayout';
 import AppLayout from '../layouts/AppLayout/AppLayout';
 import RotaProtegida from './RotaProtegida';
 import Home from '../pages/Home/Home';
 import Sobre from '../pages/Sobre/Sobre';
 import Integrantes from '../pages/Integrantes/Integrantes';
+import IntegranteDetalhado from '../pages/Integrantes/IntegranteDetalhado';
+import { integrantes } from '../data/integrantes';
 import Faq from '../pages/FAQ/FAQ';
 import Contato from '../pages/Contato/Contato';
 import Login from '../pages/Login/Login';
@@ -40,8 +42,10 @@ const titulos: Record<string, string> = {
 export default function Rotas() {
     const { pathname } = useLocation();
     useEffect(() => {
+        const idIntegrante = matchPath('/integrantes/:id', pathname)?.params.id;
+        const integrante = integrantes.find((item) => String(item.id) === idIntegrante);
         window.scrollTo({ top: 0, behavior: 'instant' });
-        document.title = `${titulos[pathname] || (pathname.startsWith('/lotes/') ? 'Detalhe do lote' : 'Página não encontrada')} · Mesa Circular`;
+        document.title = `${titulos[pathname] || integrante?.nome || (pathname.startsWith('/lotes/') ? 'Detalhe do lote' : 'Página não encontrada')} · Mesa Circular`;
         document.getElementById('conteudo')?.focus({ preventScroll: true });
     }, [pathname]);
     return (
@@ -50,6 +54,7 @@ export default function Rotas() {
                 <Route index element={<Home />} />
                 <Route path="sobre" element={<Sobre />} />
                 <Route path="integrantes" element={<Integrantes />} />
+                <Route path="integrantes/:id" element={<IntegranteDetalhado />} />
                 <Route path="faq" element={<Faq />} />
                 <Route path="contato" element={<Contato />} />
                 <Route path="login" element={<Login />} />
