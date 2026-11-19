@@ -1,8 +1,15 @@
+import { Link } from 'react-router-dom';
 import type { Integrante } from '../../data/integrantes';
 import Imagem from '../Imagem/Imagem';
 import Icone from '../Icone/Icone';
 
-export default function TeamCard({ integrante }: { integrante: Integrante }) {
+interface TeamCardProps {
+    integrante: Integrante;
+    detalhado?: boolean;
+}
+
+export default function TeamCard({ integrante, detalhado = false }: TeamCardProps) {
+    const Titulo = detalhado ? 'h1' : 'h2';
     return (
         <article className="painel card-interativo">
             <Imagem
@@ -11,7 +18,9 @@ export default function TeamCard({ integrante }: { integrante: Integrante }) {
                 loading="lazy"
                 className="mb-5 h-28 w-28 rounded-2xl object-cover"
             />
-            <h2 className="text-xl font-bold text-verde-escuro">{integrante.nome}</h2>
+            <Titulo className={`${detalhado ? 'text-2xl sm:text-3xl' : 'text-xl'} font-bold text-verde-escuro`}>
+                {integrante.nome}
+            </Titulo>
             <p className="mt-3 text-xs leading-6 text-tinta/65">
                 <strong>RM:</strong> {integrante.rm}
                 <br />
@@ -54,6 +63,15 @@ export default function TeamCard({ integrante }: { integrante: Integrante }) {
                     </span>
                 )}
             </div>
+            {!detalhado && (
+                <Link
+                    to={`/integrantes/${integrante.id}`}
+                    className="link-seta mt-5 text-sm font-semibold text-verde"
+                    aria-label={`Ver perfil de ${integrante.nome}`}
+                >
+                    Ver perfil <Icone nome="seta" className="h-4 w-4" />
+                </Link>
+            )}
         </article>
     );
 }
