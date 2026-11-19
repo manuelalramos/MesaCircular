@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import type { Lote } from '../../types';
 import { buscarMeusLotes, excluirLote } from '../../services/api';
 import useSessao from '../../hooks/useSessao';
@@ -21,11 +21,19 @@ export default function MeusLotes() {
     const acao = useAcao();
     const [editar, setEditar] = useState<Lote | null>(null);
     const [excluir, setExcluir] = useState<Lote | null>(null);
-    const [reservasId, setReservasId] = useState<number | null>(null);
+    const [parametros, setParametros] = useSearchParams();
+    const loteSolicitado = parametros.get('lote');
+    const reservasId = consulta.dados?.find((lote) => String(lote.id) === loteSolicitado)?.id ?? null;
     const areaReservas = useRef<HTMLDivElement>(null);
     useEffect(() => {
         if (reservasId) areaReservas.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, [reservasId]);
+    function selecionarReservas(id: number | null) {
+        const novos = new URLSearchParams(parametros);
+        if (id) novos.set('lote', String(id));
+        else novos.delete('lote');
+        setParametros(novos, { replace: true });
+    }
     function remover() {
         if (!excluir) return;
         void acao.executar(async () => {
@@ -86,7 +94,7 @@ export default function MeusLotes() {
                                     className="botao-pequeno bg-verde/10 text-verde-escuro"
                                     aria-expanded={reservasId === lote.id}
                                     aria-controls="reservas-selecionadas"
-                                    onClick={() => setReservasId(reservasId === lote.id ? null : lote.id)}
+                                    onClick={() => selecionarReservas(reservasId === lote.id ? null : lote.id)}
                                 >
                                     Ver reservas
                                 </button>
@@ -94,7 +102,7 @@ export default function MeusLotes() {
                                     className="rounded-full p-3 text-verde hover:bg-verde/10"
                                     aria-label={`Editar ${lote.descricao}`}
                                     onClick={() => {
-                                        setReservasId(null);
+                                        selecionarReservas(null);
                                         setEditar(lote);
                                     }}
                                 >

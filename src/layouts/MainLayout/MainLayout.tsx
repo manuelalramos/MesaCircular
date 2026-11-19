@@ -9,7 +9,7 @@ export default function MainLayout(){
         <>
         
         <Header key={`${pathname}${search}`} />
-        <main id="conteudo" className="min-h-[70vh] pt-[104px]" tabIndex={-1}>
+        <main id="conteudo" className="min-h-[70vh] mt-[104px]" tabIndex={-1}>
             <LimiteErro key={pathname}><Outlet /></LimiteErro>
         </main>
         <Footer />

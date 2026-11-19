@@ -29,18 +29,18 @@ function ReservarFormulario({
     const consulta = useConsulta(buscar);
     const [quantidade, setQuantidade] = useState('');
     const acao = useAcao();
-    const jaReservou = consulta.dados?.some(
+    const reservaAtiva = consulta.dados?.find(
         (reserva) => reserva.lote.id === lote.id && reserva.status === 'ATIVA',
     );
     if (consulta.carregando) return <AvisoEstado tipo="carregando" mensagem="Conferindo suas reservas…" />;
     if (consulta.erro)
         return <AvisoEstado tipo="erro" mensagem={consulta.erro} tentarNovamente={consulta.recarregar} />;
-    if (jaReservou)
+    if (reservaAtiva)
         return (
             <div className="rounded-2xl bg-verde/10 p-5">
                 <p className="text-sm font-semibold text-verde-escuro">Esse lote já está na sua agenda.</p>
                 <Link
-                    to="/app/minhas-reservas"
+                    to={`/app/minhas-reservas#reserva-${reservaAtiva.id}`}
                     className="mt-3 inline-block text-xs font-semibold text-verde underline"
                 >
                     Ver minhas reservas
@@ -50,7 +50,7 @@ function ReservarFormulario({
 
     function enviar(evento: FormEvent<HTMLFormElement>) {
         evento.preventDefault();
-        const falha = validarReserva(lote, Number(quantidade), jaReservou);
+        const falha = validarReserva(lote, Number(quantidade), !!reservaAtiva);
         if (falha) {
             acao.setErro(falha);
             return;
@@ -104,12 +104,24 @@ export default function LoteDetalhe() {
     return (
         <section className="container-page py-9 md:py-12">
             {!lote && consulta.statusErro !== 404 && <h1 className="sr-only">Detalhe do lote</h1>}
-            <Link
-                to="/lotes"
-                className="mb-8 inline-flex items-center gap-2 text-xs font-semibold text-verde"
-            >
-                <Icone nome="voltar" className="h-4 w-4" /> Voltar para os lotes
-            </Link>
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+                <Link
+                    to="/lotes"
+                    className="inline-flex items-center gap-2 text-xs font-semibold text-verde"
+                >
+                    <Icone nome="voltar" className="h-4 w-4" /> Voltar para os lotes
+                </Link>
+                {sessao?.tipo === 'organizacao' && lote && (
+                    <Link to="/app/minhas-reservas" className="botao-pequeno botao-contorno">
+                        <Icone nome="saco" className="h-4 w-4" /> Minhas reservas
+                    </Link>
+                )}
+                {sessao?.tipo === 'ofertante' && lote?.ofertante.id === sessao.pessoa.id && (
+                    <Link to={`/app/meus-lotes?lote=${lote.id}`} className="botao-pequeno botao-contorno">
+                        <Icone nome="pessoas" className="h-4 w-4" /> Ver reservas do lote
+                    </Link>
+                )}
+            </div>
             {consulta.carregando ? (
                 <AvisoEstado tipo="carregando" />
             ) : consulta.statusErro === 404 ? (
