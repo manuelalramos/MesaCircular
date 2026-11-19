@@ -49,6 +49,13 @@ const perguntas = [
         resposta:
             'O nome e o contato do ofertante aparecem no detalhe do lote para combinar a retirada. As reservas de cada organização ficam no painel dela e são compartilhadas com o ofertante responsável pelo lote.',
     },
+    {
+        pergunta: 'Em quais regiões o Mesa Circular atende?',
+        resposta:
+            'No momento, atendemos apenas a Região Metropolitana de São Paulo. No cadastro, ' +
+            'escolha seu bairro na lista disponível. Se ele não aparecer, fale com a equipe ' +
+            'pela página de Contato antes de concluir o cadastro.',
+    },
 ];
 
 export default function Faq() {
