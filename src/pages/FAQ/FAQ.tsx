@@ -49,6 +49,27 @@ const perguntas = [
         resposta:
             'O nome e o contato do ofertante aparecem no detalhe do lote para combinar a retirada. As reservas de cada organização ficam no painel dela e são compartilhadas com o ofertante responsável pelo lote.',
     },
+    {
+        pergunta: 'Em quais regiões o Mesa Circular atende?',
+        resposta:
+            'No momento, atendemos apenas a Região Metropolitana de São Paulo. No cadastro, ' +
+            'escolha seu bairro na lista disponível. Se ele não aparecer, fale com a equipe ' +
+            'pela página de Contato antes de concluir o cadastro.',
+    },
+    {
+        pergunta: 'Como adiciono ou altero a foto de um lote?',
+        resposta:
+            'Ao publicar ou editar um lote, cole um link público direto para a imagem no campo ' +
+            'Link da foto. Você pode conferir a prévia antes de salvar. O administrador também ' +
+            'pode alterar esse link. Sem link, usamos a foto padrão da categoria.',
+    },
+    {
+        pergunta: 'Posso cancelar uma reserva?',
+        resposta:
+            'Sim. Entre como organização, abra Minhas reservas e escolha Cancelar em uma ' +
+            'reserva ativa. Confira a mensagem e confirme o cancelamento. Se já combinou a ' +
+            'retirada, avise o ofertante também.',
+    },
 ];
 
 export default function Faq() {

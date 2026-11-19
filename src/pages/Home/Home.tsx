@@ -78,7 +78,7 @@ export default function Home() {
                         rotulo="lotes esperando uma nova mesa"
                         icone="caixa"
                     />
-                    <CardImpacto numero={temDados ? bairros : '—'} rotulo="bairros conectados" icone="pin" />
+                    <CardImpacto numero={temDados ? bairros : '—'} rotulo="bairros com lotes disponíveis" icone="pin" />
                 </div>
             </section>
             <ComoFunciona />
