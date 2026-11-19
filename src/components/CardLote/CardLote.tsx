@@ -10,7 +10,9 @@ import { imagemDoLote } from '../../data/imagem';
 export default function CardLote({ lote }: { lote: Lote }) {
     const agora = useAgora();
     return (
-        <article className="card-lote group flex min-w-0 flex-col overflow-hidden rounded-[24px] border border-linha bg-[#FFFDF8]">
+        <article className="card-lote group flex min-w-0 flex-col overflow-hidden rounded-[24px]
+        border border-linha bg-[#FFFDF8] [overflow-wrap:anywhere]">
+
             <div className="relative h-36 overflow-hidden sm:h-40">
                 <Imagem
                     src={imagemDoLote(lote)}

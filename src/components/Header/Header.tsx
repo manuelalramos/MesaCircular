@@ -34,12 +34,19 @@ export default function Header() {
         };
     }, []);
 
+    function pularParaConteudo() {
+        setAberto(false);
+        const conteudo = document.getElementById('conteudo');
+        conteudo?.focus({ preventScroll: true });
+        conteudo?.scrollIntoView({ behavior: 'instant', block: 'start' });
+    }
+
     return (
         <header
             ref={cabecalho}
             className="fixed inset-x-0 top-0 z-40 border-b border-linha bg-creme/95 backdrop-blur-md"
         >
-            <a href="#conteudo" className="skip-link">
+            <a href="#conteudo" className="skip-link" onClick={pularParaConteudo}>
                 Pular para o conteúdo
             </a>
             <p className="flex h-6 items-center justify-center bg-verde-escuro px-2 text-center text-[10px] text-creme sm:text-xs">
@@ -108,7 +115,8 @@ export default function Header() {
                 <nav
                     id="menu-celular"
                     aria-label="Navegação no celular"
-                    className="menu-entrada container-page grid gap-1 border-t border-linha py-4 lg:hidden"
+                    className="menu-entrada container-page grid max-h-[calc(100dvh-5rem)]
+                    gap-1 overflow-y-auto overscroll-contain border-t border-linha py-4 lg:hidden"
                 >
                     {links.map((link) => (
                         <NavLink

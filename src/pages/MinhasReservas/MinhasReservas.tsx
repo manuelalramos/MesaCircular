@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import type { Reserva } from '../../types';
 import { buscarMinhasReservas, cancelarReserva } from '../../services/api';
 import { formatarData, formatarNumero, statusDoLote } from '../../services/regras';
@@ -18,6 +18,13 @@ export default function MinhasReservas() {
     const { sessao } = useSessao();
     const buscar = useCallback(() => buscarMinhasReservas(sessao!.pessoa.id), [sessao]);
     const consulta = useConsulta(buscar);
+    const { hash } = useLocation();
+    useEffect(() => {
+        if (consulta.carregando || !/^#reserva-[1-9]\d*$/.test(hash)) return;
+        const reserva = document.getElementById(hash.slice(1));
+        reserva?.focus({ preventScroll: true });
+        reserva?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, [hash, consulta.carregando, consulta.dados]);
     const acao = useAcao();
     const [selecionada, setSelecionada] = useState<Reserva | null>(null);
     const [filtro, setFiltro] = useState('');
@@ -78,7 +85,12 @@ export default function MinhasReservas() {
             ) : (
                 <div className="grid gap-5">
                     {filtradas.map((reserva) => (
-                        <article key={reserva.id} className="painel">
+                        <article
+                            key={reserva.id}
+                            id={`reserva-${reserva.id}`}
+                            tabIndex={-1}
+                            className={`painel scroll-mt-28 ${hash === `#reserva-${reserva.id}` ? 'ring-2 ring-verde/30' : ''}`}
+                        >
                             <div className="flex flex-wrap items-start justify-between gap-4">
                                 <div>
                                     <p className="text-[10px] uppercase tracking-wider text-tinta/50">

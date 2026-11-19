@@ -82,6 +82,21 @@ export function resumirQuantidades(reservas: Reserva[]) {
     return [...totais.values()].sort((a, b) => a.unidade.localeCompare(b.unidade));
 }
 
+export function quantidadesPublicadas(lotes: Lote[]) {
+    const totais = new Map<string, number>();
+    for (const lote of lotes) {
+        totais.set(lote.unidade, (totais.get(lote.unidade) || 0) + lote.quantidade);
+    }
+    return [...totais].map(([unidade, quantidade]) => ({ unidade, quantidade }))
+        .sort((a, b) => a.unidade.localeCompare(b.unidade));
+}
+
+export function reservasRecentes(reservas: Reserva[]) {
+    return [...reservas].sort((a, b) =>
+        ((instanteDaData(b.criadaEm) || 0) - (instanteDaData(a.criadaEm) || 0)) || b.id - a.id,
+    ).slice(0, 4);
+}
+
 export function validarNovaSenha(senhaAtual: string, novaSenha: string, confirmacao: string): string {
     if (!senhaAtual) return 'Informe sua senha atual.';
     if (novaSenha.length < 6) return 'A nova senha precisa ter pelo menos 6 caracteres.';
