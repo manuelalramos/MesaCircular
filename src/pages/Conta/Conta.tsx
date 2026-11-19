@@ -95,7 +95,7 @@ export default function Conta() {
                             required
                         />
                         <Feedback erro={emailAcao.erro} sucesso={emailAcao.sucesso} />
-                        <button className="botao justify-self-start bg-verde text-creme" type="submit">
+                        <button className="botao w-full justify-self-stretch bg-verde text-creme sm:w-auto sm:justify-self-start" type="submit">
                             {emailAcao.enviando ? 'Salvando…' : 'Salvar novo e-mail'}
                             <Icone nome="check" className="h-4 w-4" />
                         </button>
@@ -135,7 +135,7 @@ export default function Conta() {
                         />
                         <Feedback erro={senhaAcao.erro} sucesso={senhaAcao.sucesso} />
                         <button
-                            className="botao justify-self-start bg-amarelo text-verde-escuro"
+                            className="botao w-full justify-self-stretch bg-amarelo text-verde-escuro sm:w-auto sm:justify-self-start"
                             type="submit"
                         >
                             {senhaAcao.enviando ? 'Salvando…' : 'Salvar nova senha'}
