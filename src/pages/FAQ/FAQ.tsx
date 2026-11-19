@@ -63,6 +63,13 @@ const perguntas = [
             'Link da foto. Você pode conferir a prévia antes de salvar. O administrador também ' +
             'pode alterar esse link. Sem link, usamos a foto padrão da categoria.',
     },
+    {
+        pergunta: 'Posso cancelar uma reserva?',
+        resposta:
+            'Sim. Entre como organização, abra Minhas reservas e escolha Cancelar em uma ' +
+            'reserva ativa. Confira a mensagem e confirme o cancelamento. Se já combinou a ' +
+            'retirada, avise o ofertante também.',
+    },
 ];
 
 export default function Faq() {
