@@ -108,7 +108,10 @@ export default function Login() {
                         name="email"
                         label="E-mail"
                         type="email"
-                        autoComplete="username"
+                        autoComplete="username" 
+                        autoCapitalize="none" 
+                        autoCorrect="off" 
+                        spellCheck={false}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
