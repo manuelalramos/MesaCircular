@@ -66,7 +66,7 @@ export default function Faq() {
                         {perguntas.map((item, indice) => (
                             <article
                                 key={item.pergunta}
-                                className={`faq-item ${aberta === indice ? 'faq-item-aberto' : ''}`}
+                                className={`faq-item overflow-hidden rounded-2xl border bg-[#FFFDF8] transition-[border-color,box-shadow] duration-300 ${aberta === indice ? 'faq-item-aberto border-verde shadow-[0_8px_24px_#1c4b3310]' : 'border-[#d8dfd0] shadow-[0_2px_8px_#1c4b3305]'}`}
                             >
                                 <h2>
                                     <button
@@ -74,10 +74,10 @@ export default function Faq() {
                                         aria-expanded={aberta === indice}
                                         aria-controls={`resposta-${indice}`}
                                         onClick={() => setAberta(aberta === indice ? null : indice)}
-                                        className="faq-pergunta"
+                                        className={`faq-pergunta flex w-full items-center justify-between gap-5 px-6 py-5 text-left text-sm font-semibold leading-[1.65] transition-colors duration-300 focus-visible:outline-offset-[-4px] ${aberta === indice ? 'bg-verde-escuro text-creme focus-visible:outline-amarelo' : 'bg-[#e7eee1] text-verde-escuro focus-visible:outline-verde-escuro'}`}
                                     >
                                         {item.pergunta}
-                                        <Icone nome="chevron" className="faq-sinal h-4 w-4" />
+                                        <Icone nome="chevron" className={`h-4 w-4 transition-[transform,color] duration-300 ${aberta === indice ? 'rotate-180 text-amarelo' : ''}`} />
                                     </button>
                                 </h2>
                                 <div
@@ -85,16 +85,18 @@ export default function Faq() {
                                     role="region"
                                     aria-labelledby={`pergunta-${indice}`}
                                     aria-hidden={aberta !== indice}
-                                    className={`faq-resposta ${aberta === indice ? 'faq-resposta-aberta' : ''}`}
+                                    className={`grid transition-[grid-template-rows,opacity] duration-[380ms] ease-[cubic-bezier(0.2,0.65,0.3,1)] motion-reduce:duration-[240ms] ${aberta === indice ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
                                 >
-                                    <div>
-                                        <p className="faq-texto">{item.resposta}</p>
+                                    <div className="min-h-0 overflow-hidden bg-[#FFFDF8]">
+                                        <p className={`border-t border-linha px-6 py-5 text-sm leading-[1.85] text-[#4a443c] transition-transform duration-300 motion-reduce:transform-none ${aberta === indice ? 'translate-y-0' : '-translate-y-1'}`}>
+                                            {item.resposta}
+                                        </p>
                                     </div>
                                 </div>
                             </article>
                         ))}
                     </div>
-                    <div className="faq-contato mt-10 text-center">
+                    <div className="mt-10 rounded-[22px] bg-verde-escuro px-6 py-8 text-center shadow-[0_8px_24px_#1c4b3310]">
                         <h2 className="text-xl font-semibold text-creme">
                             Ficou alguma <span className="text-amarelo">dúvida?</span>
                         </h2>

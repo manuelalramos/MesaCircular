@@ -69,7 +69,6 @@
 - [Como usar](#como-usar)
 - [Scripts disponíveis](#scripts-disponíveis)
 - [Deploy](#deploy)
-- [Limitações atuais](#limitações-atuais)
 - [Integrantes](#integrantes)
 - [Links](#links)
 - [Contato](#contato)
@@ -196,6 +195,10 @@ a versão final na pasta `dist`.
 Responsável pela maior parte da estilização, com classes utilitárias e tokens de cor
 próprios do projeto, garantindo consistência visual e responsividade.
 
+Os layouts e a FAQ utilizam classes utilitárias diretamente nos componentes. O arquivo
+`src/index.css` concentra as regras globais, os componentes visuais compartilhados com
+`@apply` e os efeitos de interação e animação que precisam de regras próprias.
+
 ### React Router DOM
 Cuida da navegação da SPA: rotas estáticas, rota dinâmica (detalhe do lote), rotas
 protegidas por perfil e página 404.
@@ -320,6 +323,7 @@ mesa-circular/
 | `/` | Home | Página inicial |
 | `/sobre` | Sobre | Proposta, problema e ODS |
 | `/integrantes` | Integrantes | Equipe (foto, RM, GitHub, LinkedIn) |
+| `/integrantes/:id` | Perfil da integrante | Rota dinâmica com os dados da integrante selecionada |
 | `/faq` | FAQ | Perguntas frequentes |
 | `/contato` | Contato | Formulário validado |
 | `/lotes` | Lotes | Vitrine com filtros |
@@ -338,6 +342,11 @@ A rota dinâmica `/lotes/:id` utiliza o parâmetro da URL para carregar o lote
 correspondente; se o id não existir, a aplicação exibe uma mensagem e um caminho de volta
 para a lista.
 
+A lista de integrantes mantém a rota estática `/integrantes`. Cada card tem o link
+**Ver perfil** para `/integrantes/:id`, por exemplo `/integrantes/1`. A página usa o ID
+dos dados da equipe para exibir foto, nome, RM, turma, GitHub e LinkedIn. Um ID inexistente
+ou inválido apresenta a página 404.
+
 As atividades recentes também utilizam atalhos dentro das rotas existentes:
 
 - `/app/meus-lotes?lote=ID` abre as reservas de um lote do ofertante e mantém a seleção
@@ -354,7 +363,8 @@ As atividades recentes também utilizam atalhos dentro das rotas existentes:
 - **Home** — herói com a narrativa, faixa de impacto, "como funciona" em 3 passos, lotes em
   destaque (da API), seção de ODS e chamada para participar.
 - **Sobre** — o problema do desperdício, a solução e os ODS 2 e 11.
-- **Integrantes** — cards da equipe com foto, RM, turma, GitHub e LinkedIn.
+- **Integrantes** — cards da equipe com foto, RM, turma, GitHub e LinkedIn, com acesso
+  ao perfil individual pela rota dinâmica `/integrantes/:id`.
 - **FAQ** — perguntas frequentes em accordion, incluindo a diferença entre ofertante e
   organização e quem pode reservar.
 - **Contato** — formulário com validação.
@@ -563,11 +573,17 @@ npm run preview
 
 Visualiza localmente a versão gerada pelo build.
 
+O projeto não inclui uma suíte de testes automatizados nesta entrega. Os comandos de
+verificação disponíveis são `npm run lint` e `npm run build`, acompanhados da conferência
+manual descrita abaixo.
+
 ### Conferência manual
 
 Para validar o fluxo integrado, utilize contas de teste da API e confira:
 
 1. Navegação pública, busca e filtros de lotes, detalhe e página não encontrada.
+   Na equipe, confira os links de perfil, a abertura direta de `/integrantes/1` e o
+   tratamento de um ID inexistente, como `/integrantes/999`.
 2. Login com cada perfil, permanência da sessão ao recarregar e saída da conta.
 3. Publicação e edição de um lote pelo ofertante, incluindo foto por link.
 4. Reserva pela organização e confirmação da quantidade entregue pelo ofertante.
