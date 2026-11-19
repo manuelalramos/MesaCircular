@@ -23,6 +23,7 @@ export default function Confirmacao({
 }: ConfirmacaoProps) {
     const dialogo = useRef<HTMLDialogElement>(null);
     const tituloId = useId();
+    const descricaoId = useId();
     useEffect(() => {
         if (aberto) dialogo.current?.showModal();
         else dialogo.current?.close();
@@ -36,6 +37,8 @@ export default function Confirmacao({
             }}
             className="w-[calc(100%-2rem)] max-w-md rounded-3xl border border-linha bg-creme p-7 text-tinta shadow-xl backdrop:bg-verde-escuro/50"
             aria-labelledby={tituloId}
+            aria-describedby={descricaoId}
+
         >
             <span className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-rosa/30 text-vinho">
                 <Icone nome="info" />
@@ -43,7 +46,10 @@ export default function Confirmacao({
             <h2 id={tituloId} className="text-xl font-bold text-verde-escuro">
                 {titulo}
             </h2>
-            <p className="mt-3 text-sm leading-7 text-tinta/70">{descricao}</p>
+            <p id={descricaoId} className="mt-3 text-sm leading-7 text-tinta/70">
+                {descricao}
+            </p>
+
             {erro && (
                 <p role="alert" className="mt-4 text-sm text-vinho">
                     {erro}

@@ -32,7 +32,15 @@ export default function CampoFormulario({
                 required={required}
                 className={`campo ${erro ? 'border-vinho' : ''} ${props.className || ''}`}
                 aria-invalid={!!erro}
-                aria-describedby={erro || ajuda ? `${identificador}-ajuda` : undefined}
+                aria-describedby={
+                    [
+                        props['aria-describedby'],
+                        erro || ajuda ? `${identificador}-ajuda` : undefined,
+                    ]
+                        .filter(Boolean)
+                        .join(' ') || undefined
+                }
+
             />
             {(erro || ajuda) && (
                 <p

@@ -9,7 +9,7 @@ interface AvisoEstadoProps {
 
 export default function AvisoEstado({ tipo, mensagem, tentarNovamente, compacto = false }: AvisoEstadoProps) {
     return (
-        <div className={`rounded-3xl border border-dashed border-linha bg-creme text-center ${compacto ? 'px-4 py-5' : 'px-6 py-12'}`} role={tipo === 'erro' ? 'alert' : 'status'} aria-live="polite">
+        <div className={`rounded-3xl border border-dashed border-linha bg-creme text-center ${compacto ? 'px-4 py-5' : 'px-6 py-12'}`} role={tipo === 'erro' ? 'alert' : 'status'} aria-live={tipo === 'erro' ? 'assertive' : 'polite'} aria-atomic="true">
             {tipo === 'carregando' ? (
                 <Icone nome="carregar" className="carregando-icone mx-auto mb-4 h-7 w-7 text-verde" />
             ) : (

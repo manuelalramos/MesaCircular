@@ -142,7 +142,9 @@ export default function LoteDetalhe() {
                         <div className="mb-6">
                             <Feedback sucesso={sucesso} />
                         </div>
-                        <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr]">
+                        <div className="grid gap-8 [overflow-wrap:anywhere]
+                        lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+
                             <div>
                                 <Imagem
                                     src={imagemDoLote(lote)}
