@@ -141,7 +141,11 @@ export default function Lotes() {
                         ) : (
                             <AvisoEstado
                                 tipo="vazio"
-                                mensagem="Nenhum lote por aqui com esses filtros. Que tal tentar outro bairro ou alimento?"
+                                mensagem={
+                                    dados?.length
+                                        ? 'Nenhum lote com esses filtros. Tente outro bairro, alimento ou status.'
+                                        : 'Ainda não há lotes cadastrados. Volte em breve para conferir as novidades.'
+                                }
                             />
                         )}
                     </>
