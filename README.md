@@ -270,30 +270,45 @@ index.html
 
 ## Estrutura de pastas
 
+A árvore destaca os arquivos principais e os pontos de entrada das alterações recentes:
+
 ```text
 mesa-circular/
-├── docs/prints/            # capturas de tela usadas no README
-├── public/                 # logos e favicon
+├── .github/workflows/      # verificações dos Pull Requests
+├── docs/prints/            # capturas de tela utilizadas neste README
+├── public/                 # logo.png, logo_footer.png e favicon.png
 ├── src/
-│   ├── assets/integrantes/ # fotos da equipe
-│   ├── components/         # componentes reutilizáveis
-│   ├── contexts/           # contexto de sessão
-│   ├── data/               # dados de apoio (integrantes, imagens, contato)
+│   ├── assets/integrantes/ # fotos locais da equipe
+│   ├── components/         # componentes visuais compartilhados
+│   │   ├── TeamCard/TeamCard.tsx
+│   │   └── ResumoQuantidades/ResumoQuantidades.tsx
+│   ├── contexts/           # SessaoContext e SessaoProvider
+│   ├── data/               # integrantes.ts, imagem.ts e contato.ts
 │   ├── hooks/              # useConsulta, useAcao, useSessao e useAgora
-│   ├── layouts/            # MainLayout, AppLayout, AcessoLayout
-│   ├── pages/              # páginas do site e da área logada
-│   ├── routes/             # registro das rotas e rota protegida
-│   ├── services/           # camada de API (fetch), erros e regras de domínio
-│   ├── types/              # tipagens TypeScript
+│   ├── layouts/            # MainLayout, AppLayout e AcessoLayout
+│   ├── pages/              # demais telas institucionais, painéis e formulários
+│   │   ├── Integrantes/
+│   │   │   ├── Integrantes.tsx
+│   │   │   └── IntegranteDetalhado.tsx
+│   │   ├── FAQ/FAQ.tsx
+│   │   └── Lotes/          # Lotes.tsx e LoteDetalhado.tsx
+│   ├── routes/             # Rotas.tsx e RotaProtegida.tsx
+│   ├── services/           # api.ts, contrato.ts, regras.ts, sessao.ts e erro.ts
+│   ├── types/index.ts      # tipos do domínio
 │   ├── App.tsx
 │   ├── main.tsx
-│   └── index.css
-├── index.html
-├── package.json
+│   └── index.css           # Tailwind, estilos compartilhados e animações
+├── index.html              # idioma pt-BR, título, favicon e fontes
+├── INTEGRANTES.txt         # relação da equipe e RMs para a entrega
+├── package.json            # dependências e comandos disponíveis
 ├── package-lock.json
-├── vercel.json             # fallback de SPA para o deploy
-├── vite.config.ts
+├── postcss.config.js
 ├── tailwind.config.js
+├── tsconfig.json
+├── tsconfig.app.json
+├── tsconfig.node.json
+├── vercel.json             # fallback das rotas da SPA
+├── vite.config.ts
 └── README.md
 ```
 
@@ -313,6 +328,23 @@ mesa-circular/
 - **src/routes** — a configuração das rotas e a proteção por perfil.
 - **src/services** — a camada que conversa com a API e aplica as regras.
 - **src/types** — os formatos esperados dos dados.
+
+---
+
+### Arquivos de referência
+
+| Arquivo | Responsabilidade |
+|---|---|
+| [`src/data/integrantes.ts`](./src/data/integrantes.ts) | IDs, nomes, RMs, turma, fotos e redes profissionais das integrantes. |
+| [`Integrantes.tsx`](./src/pages/Integrantes/Integrantes.tsx) | Lista os cards da equipe na rota estática. |
+| [`IntegranteDetalhado.tsx`](./src/pages/Integrantes/IntegranteDetalhado.tsx) | Consulta o ID da URL, exibe o perfil e trata IDs inválidos com a página 404. |
+| [`TeamCard.tsx`](./src/components/TeamCard/TeamCard.tsx) | Card reutilizado pela lista e pelo perfil individual. |
+| [`FAQ.tsx`](./src/pages/FAQ/FAQ.tsx) | Perguntas, respostas e estado do accordion, com classes utilitárias Tailwind. |
+| [`Rotas.tsx`](./src/routes/Rotas.tsx) | Registra as rotas estáticas e dinâmicas e atualiza o título da página. |
+| [`index.css`](./src/index.css) | Importa as camadas Tailwind e reúne regras globais, componentes com `@apply` e animações. |
+| [`index.html`](./index.html) | Define `lang="pt-BR"`, título inicial, favicon e carregamento das fontes. |
+| [`pr-quality.yml`](./.github/workflows/pr-quality.yml) | Executa `npm ci`, lint e build com Node 24 no CI. |
+| [`INTEGRANTES.txt`](./INTEGRANTES.txt) | Lista a equipe e os RMs em texto simples para a entrega. |
 
 ---
 
@@ -397,8 +429,10 @@ As atividades recentes também utilizam atalhos dentro das rotas existentes:
 - **ReservasLote** — lista de reservas de um lote (visão do ofertante).
 - **Confirmacao** — diálogo de confirmação de ações importantes.
 - **Feedback** — mensagens de erro e sucesso dos formulários.
+- **TeamCard** — utilizado na lista de integrantes e no perfil individual. Exibe o nome
+  como `h2` na lista e como `h1` no perfil; o link **Ver perfil** aparece na lista.
 - **LimiteErro** — apresenta uma alternativa de recuperação quando uma tela falha ao renderizar.
-- **Header, Footer, Logo, PageIntro, Icone, Imagem, ComoFunciona, SecaoODS, TeamCard** —
+- **Header, Footer, Logo, PageIntro, Icone, Imagem, ComoFunciona, SecaoODS** —
   base visual e institucional do site.
 
 ---
@@ -490,13 +524,15 @@ para leitores de tela. A navegação principal utiliza um menu recolhível.
 
 ## Acessibilidade
 
+- idioma principal definido como `pt-BR` no `index.html`;
 - `aria-label` em botões, links e listas;
 - foco visível para navegação por teclado;
 - `alt` nas imagens;
 - `label` associado aos campos de formulário;
 - mensagens de erro próximas aos campos;
 - HTML semântico (header, main, section, footer, nav);
-- link para pular diretamente ao conteúdo;
+- link **Pular para o conteúdo**, com foco e rolagem para `main#conteudo` e fechamento
+  do menu do celular quando estiver aberto;
 - avisos de carregamento, erro e sucesso com `role` e `aria-live`;
 - foco e destaque no card ao abrir uma reserva pelo atalho do painel.
 
@@ -523,26 +559,61 @@ creme (em vez de branco puro). Paleta:
 
 ## Prints do projeto
 
+As capturas ficam em `docs/prints/`. Para atualizar uma imagem, substitua o arquivo
+correspondente e mantenha o nome e a extensão utilizados abaixo.
+
+### Página inicial
+
 <p align="center">
-  <img src="./docs/prints/home.png" alt="Home" width="700" />
+  <img src="./docs/prints/home.png" alt="Página inicial do Mesa Circular" width="700" />
 </p>
+
+### Vitrine de lotes
+
 <p align="center">
-  <img src="./docs/prints/lotes.png" alt="Vitrine de lotes" width="700" />
+  <img src="./docs/prints/lotes.png" alt="Vitrine de lotes com busca e filtros" width="700" />
 </p>
+
+### Detalhe do lote
+
 <p align="center">
-  <img src="./docs/prints/detalhe.png" alt="Detalhe do lote" width="700" />
+  <img src="./docs/prints/detalhe.png" alt="Detalhe de um lote com saldo, prazo e informações de retirada" width="700" />
 </p>
+
+### FAQ
+
+<p align="center">
+  <img src="./docs/prints/faq.jpg" alt="FAQ do Mesa Circular com uma resposta expandida" width="700" />
+</p>
+
+### Perfil individual da integrante
+
+<p align="center">
+  <img src="./docs/prints/perfil-integrante.jpg" alt="Perfil de Manuela de Lima Ramos com foto, RM, turma, GitHub e LinkedIn" width="700" />
+</p>
+
+### Painel da organização
+
 <p align="center">
   <img src="./docs/prints/dashboardorganizacao.png" alt="Painel da organização com reservas e quantidades retiradas" width="700" />
 </p>
+
+### Painel do ofertante
+
 <p align="center">
   <img src="./docs/prints/dashboardofertante.png" alt="Painel do ofertante com publicações e reservas recebidas" width="700" />
 </p>
+
+### Portal administrativo
+
 <p align="center">
-  <img src="./docs/prints/admin.png" alt="Portal admin" width="700" />
+  <img src="./docs/prints/admin.png" alt="Portal administrativo do Mesa Circular" width="700" />
 </p>
+
+### Versão mobile
+
 <p align="center">
-  <img src="./docs/prints/mobile.png" alt="Versão mobile" width="320" />
+  <img src="./docs/prints/mobile.png" alt="Mesa Circular em uma tela de celular" width="320" />
 </p>
 
 ---
@@ -605,7 +676,8 @@ tarefa. Os commits descrevem a alteração, com prefixos como `feat:`, `fix:` e 
 
 ## Como instalar
 
-Pré-requisitos: **Git**, **npm** e **Node.js 20.19 ou superior**.
+Pré-requisitos: **Git**, **npm** e **Node.js 22.12 ou superior**, ou **Node.js 20.19+
+na linha 20**, conforme o requisito do Vite. O CI do projeto utiliza **Node 24**.
 
 ```bash
 git clone https://github.com/manuelalramos/MesaCircular.git mesa-circular
